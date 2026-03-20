@@ -108,34 +108,35 @@ with tabs[7]:
         t3 = st.checkbox("Assenza di controllo sistematico parole chiave.", key="t3")
         punti_txt = sum([t1, t2, t3])
 
-with tabs[8]:
-    st.subheader("Valutazione finale e Report")
-    st.write("Sintesi dei rischi rilevati basata sui protocolli dell'Appendice B.")
+# --- COLONNA DESTRA: SEZIONE 7 (RISULTATI SEMPRE VISIBILI) ---
+with col_risultati:
+    st.header("⚖️ Scorecard di rischio")
+    st.info("I risultati si aggiornano dinamicamente mentre completi l'audit.")
     
-    res_a, res_b, res_c = st.columns(3)
+    # BOX 1: SISTEMA
+    st.subheader("Rischi sistemici (Liv. 2-6)")
+    if critici_sistema >= 4:
+        st.error(f"🔴 ALTO ({critici_sistema} criticità)")
+    elif 2 <= critici_sistema <= 3:
+        st.warning(f"🟡 MEDIO ({critici_sistema} criticità)")
+    else:
+        st.success("🟢 BASSO (Stato ottimale)")
     
-    with res_a:
-        st.markdown("**Rischio sistemico (Liv. 2-6)**")
-        if critici_sistema >= 4:
-            st.error(f"🔴 ALTO ({critici_sistema} criticità)")
-        elif 2 <= critici_sistema <= 3:
-            st.warning(f"🟡 MEDIO ({critici_sistema} criticità)")
-        else:
-            st.success("🟢 BASSO")
-            
-    with res_b:
-        st.markdown("**Rischio nelle immagini (8.1)**")
-        if punti_img >= 2:
-            st.error(f"🔴 ALTO ({punti_img} pattern)")
-        else:
-            st.success("🟢 BASSO")
-            
-    with res_c:
-        st.markdown("**Rischio nei testi (8.2)**")
-        if punti_txt >= 1:
-            st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
-        else:
-            st.success("🟢 NON RILEVATO")
+    # BOX 2: IMMAGINI
+    st.subheader("Rischio nelle immagini (7.1)")
+    if punti_img >= 2:
+        st.error(f"🔴 ALTO ({punti_img} pattern)")
+    else:
+        st.success("🟢 BASSO")
+        
+    # BOX 3: TESTI
+    st.subheader("Rischio nei esti (7.2)")
+    if punti_txt >= 1:
+        st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
+    else:
+        st.success("🟢 NON RILEVATO")
+
+    st.divider()
 
     # --- ESPORTAZIONE REPORT ---
     report_txt = f"""REPORT DI CONFORMITÀ IMAGES - PRIN PNRR
