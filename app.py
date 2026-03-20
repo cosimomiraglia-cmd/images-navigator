@@ -1,101 +1,107 @@
 import streamlit as st
 
 # Configurazione estetica
-st.set_page_config(page_title="IMAGES Navigator 2.0", layout="wide")
+st.set_page_config(page_title="IMAGES Navigator - Protocollo Appendice B", layout="wide")
 
-st.title("🛡️ IMAGES Navigator: Developer Compliance Tool")
-st.markdown("---")
+st.title("🛡️ IMAGES Navigator: Protocollo di Audit")
+st.caption("Toolkit IMAGES - Versione conforme all'Appendice B (PRIN PNRR)")
 
-# --- STEP 0: SETUP (Sidebar) ---
-with st.sidebar:
-    st.header("0. Setup di Progetto")
-    st.checkbox("Caso d'uso e impatti definiti")
-    st.checkbox("Indicatori selezionati per il dominio")
-    st.checkbox("Metodo di misura stabilito")
-    st.checkbox("Confronto stakeholder effettuato")
-    st.divider()
-    st.info("Questo tool genera un report di rischio basato sui 4 Livelli (+1) e i controlli specifici IMAGES.")
-
-# --- INTERFACCIA A TAB PER NON APPIATTIRE L'OUTPUT ---
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "📂 Dati", "👥 Team", "⚙️ Modello", "👤 Utenti", "🌍 Contesto", "🖼️ Visual/Text"
-])
-
-# Inizializziamo il conteggio degli indicatori critici
+# Inizializziamo il conteggio degli indicatori critici per il calcolo del rischio (Step 7)
 critici_totali = 0
 
-with tab1:
+# --- TABS BASATI SULLA NUMERAZIONE DELL'APPENDICE ---
+tabs = st.tabs([
+    "0. Prep", "1. Procedura", "2. DATI", "3. TEAM", 
+    "4. MODELLO", "5. UTENTI", "6. CONTESTO", "8. Visual/Text"
+])
+
+with tabs[0]:
+    st.subheader("0. Prima di iniziare (Setup)")
+    st.checkbox("Definizione caso d'uso, gruppi coinvolti e impatti")
+    st.checkbox("Selezione set minimo di indicatori per livello")
+    st.checkbox("Stabilizzazione dei metodi di misura (log, audit, survey)")
+    st.checkbox("Confronto con stakeholder/comunità impattate")
+
+with tabs[1]:
+    st.subheader("1. Procedura in 5 passi")
+    st.info("Istruzioni operative per il team di sviluppo")
+    st.checkbox("(1) Scelta degli indicatori rilevanti (no liste standard)")
+    st.checkbox("(2) Associazione evidenza verificabile per ogni indicatore")
+    st.checkbox("(3) Identificazione indicatori critici")
+    st.checkbox("(4) Ponderazione basata su gravità impatti umani")
+    st.checkbox("(5) Iterazione post-aggiornamento (dati, modelli, norme)")
+
+with tabs[2]:
     st.subheader("2. Livello DATI")
-    d1 = st.checkbox("Mancato confronto con popolazione/target (Sottorappresentazione)")
-    d2 = st.checkbox("Presenza di linguaggio/etichette degradanti o stereotipate")
-    d3 = st.checkbox("Assenza di strategie di riequilibrio per esclusioni storiche")
-    d4 = st.checkbox("Mancata documentazione di limiti e rischi (Data Sheet)")
+    d1 = st.checkbox("Mancato confronto dataset vs popolazione/target")
+    d2 = st.checkbox("Presenza linguaggio o etichette degradanti/stereotipate")
+    d3 = st.checkbox("Assenza strategie di riequilibrio (esclusioni storiche)")
+    d4 = st.checkbox("Mancata documentazione limiti e rischi (Data Sheet)")
     critici_totali += sum([d1, d2, d3, d4])
 
-with tab2:
+with tabs[3]:
     st.subheader("3. Livello TEAM")
-    t1 = st.checkbox("Omogeneità eccessiva e mancanza di competenze DEI/Sociali")
-    t2 = st.checkbox("Presenza di variabili/proxy che colpiscono gruppi protetti")
-    t3 = st.checkbox("Assenza di un registro decisionale esplicito")
-    t4 = st.checkbox("Mancanza di una review specifica su bias durante lo sviluppo")
-    critici_totali += sum([t1, t2, t3, t4])
+    t1 = st.checkbox("Mancata conoscenza composizione team/esclusioni decisionali")
+    t2 = st.checkbox("Uso di variabili/proxy che colpiscono gruppi protetti")
+    t3 = st.checkbox("Assenza competenze non tecniche (sociali, DEI, diritto)")
+    t4 = st.checkbox("Assenza registro decisionale con razionali espliciti")
+    t5 = st.checkbox("Mancanza review su bias in fase di sviluppo")
+    critici_totali += sum([t1, t2, t3, t4, t5])
 
-with tab3:
+with tabs[4]:
     st.subheader("4. Livello MODELLO")
-    m1 = st.checkbox("Disparità di performance disaggregate (FP/FN, Accuracy)")
-    m2 = st.checkbox("Output che amplificano stereotipi (testati con prompt sensibili)")
-    m3 = st.checkbox("Assenza di tecniche di mitigazione attive")
-    m4 = st.checkbox("Model Card non aggiornata o incompleta")
+    m1 = st.checkbox("Mancato calcolo metriche disaggregate (FP/FN, accuracy)")
+    m2 = st.checkbox("Mancato test con prompt sensibili (genere, etnia, disabilità)")
+    m3 = st.checkbox("Assenza di tecniche di mitigazione su disparità emerse")
+    m4 = st.checkbox("Mancata manutenzione Model Card aggiornata")
     critici_totali += sum([m1, m2, m3, m4])
 
-with tab4:
+with tabs[5]:
     st.subheader("5. Livello UTENTI")
-    u1 = st.checkbox("Presenza di prompt abusivi o feedback loop non monitorati")
-    u2 = st.checkbox("Assenza di canali di segnalazione e contestazione")
-    u3 = st.checkbox("Interfaccia non accessibile o non testata con utenti vulnerabili")
-    critici_totali += sum([u1, u2, u3])
+    u1 = st.checkbox("Assenza monitoraggio prompt abusivi e comportamenti discriminatori")
+    u2 = st.checkbox("Mancata osservazione echo-chamber e reinforcement loop")
+    u3 = st.checkbox("Assenza canali semplici per segnalazione esiti ingiusti")
+    u4 = st.checkbox("Mancata tracciabilità segnalazioni/modifiche reali")
+    u5 = st.checkbox("Interfaccia non accessibile o non testata con utenti vulnerabili")
+    critici_totali += sum([u1, u2, u3, u4, u5])
 
-with tab5:
+with tabs[6]:
     st.subheader("6. Livello CONTESTO (+1)")
-    c1 = st.checkbox("Mancato allineamento a norme (Privacy, AI Act, Discriminazione)")
-    c2 = st.checkbox("Assenza di governance partecipativa e policy di inclusività")
-    c3 = st.checkbox("Mancanza di audit periodici e impact assessment")
-    critici_totali += sum([c1, c2, c3])
+    c1 = st.checkbox("Mancato allineamento norme (Privacy, AI Act, Discriminazione)")
+    c2 = st.checkbox("Assenza strutture governance con gruppi impattati")
+    c3 = st.checkbox("Assenza policy esplicite su fairness e inclusività")
+    c4 = st.checkbox("Mancanza valutazioni d'impatto e audit periodici")
+    critici_totali += sum([c1, c2, c3, c4])
 
-with tab6:
-    st.subheader("8. Controllo Rapido Contenuti Generati")
-    col_img, col_txt = st.columns(2)
-    
-    with col_img:
+with tabs[7]:
+    st.subheader("8. Controllo rapido contenuti generati")
+    col1, col2 = st.columns(2)
+    with col1:
         st.markdown("**8.1 Immagini**")
-        i1 = st.checkbox("Donne in ruoli passivi (sfondo, cura, decorazione)")
+        i1 = st.checkbox("Donne sistematicamente in ruoli passivi/decorativi")
         i2 = st.checkbox("Uomini sempre in ruoli attivi/dominanti")
         i3 = st.checkbox("Persone bianche sistematicamente in primo piano/potere")
-        rischio_img = sum([i1, i2, i3]) >= 2
-        if rischio_img: st.error("⚠️ Rischio Stereotipi Visivi Alto")
-        
-    with col_txt:
+        pattern_img = sum([i1, i2, i3])
+        if pattern_img >= 2: st.error("⚠️ Rischio alto stereotipi visivi")
+    with col2:
         st.markdown("**8.2 Testi**")
-        tx1 = st.checkbox("Uso del maschile sovraesteso ('uomini' per 'persone')")
+        tx1 = st.checkbox("Uso di 'uomo/uomini' come sinonimo di persone")
         tx2 = st.checkbox("Presenza di stereotipi o metafore degradanti")
-        tx3 = st.checkbox("Mancato controllo parole chiave problematiche")
-        rischio_txt = sum([tx1, tx2, tx3]) >= 1
-        if rischio_txt: st.error("⚠️ Testo a Rischio Bias")
+        tx3 = st.checkbox("Mancato controllo sistematico parole chiave")
+        pattern_txt = sum([tx1, tx2, tx3])
+        if pattern_txt >= 1: st.error("⚠️ Testo a rischio bias")
 
 # --- 7. VALUTAZIONE DEL RISCHIO COMPLESSIVO ---
-st.markdown("---")
-st.header("7. Valutazione del Rischio Complessivo")
+st.divider()
+st.header("7. Valutazione del rischio complessivo")
+st.write(f"Indicatori critici rilevati: **{critici_totali}**")
 
-if critici_totali >= 4 or rischio_img:
-    st.error(f"🚨 RISCHIO ALTO ({critici_totali} indicatori critici attivi)")
-    st.markdown("**AZIONE:** Blocco del rilascio. Intervento correttivo obbligatorio.")
+if critici_totali >= 4:
+    st.error("🔴 RISCHIO ALTO: Bloccare il rilascio e intervenire.")
 elif 2 <= critici_totali <= 3:
-    st.warning(f"⚠️ RISCHIO MEDIO ({critici_totali} indicatori critici attivi)")
-    st.markdown("**AZIONE:** Rilascio condizionato a piani di mitigazione e monitoraggio.")
+    st.warning("🟡 RISCHIO MEDIO: Rilascio condizionato a mitigazione.")
 else:
-    st.success(f"✅ RISCHIO BASSO ({critici_totali} indicatori critici attivi)")
-    st.markdown("**AZIONE:** Procedere con monitoraggio regolare.")
+    st.success("🟢 RISCHIO BASSO: Procedere con monitoraggio regolare.")
 
-# Tasto per simulare il report
-if st.button("Genera Report per Documentazione PRIN"):
-    st.write("Report generato con successo. Copia questa valutazione nella documentazione di progetto.")
+st.divider()
+st.caption("Toolkit IMAGES - Progetto PRIN PNRR. Documentazione generata automaticamente dall'audit dello sviluppatore.")
