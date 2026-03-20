@@ -164,7 +164,7 @@ def render_audit_item(label, key, weight=1.0, is_identity=False, tag=""):
 
 # --- LAYOUT PRINCIPALE ---
 st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES NAVIGATOR</h1>", unsafe_allow_html=True)
-st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
+st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR IMAGES")
 st.write("") # Spaziatura
 
 col_input, col_risultati = st.columns([0.65, 0.35], gap="large")
@@ -222,7 +222,7 @@ with col_input:
         render_audit_item("Mancanza di valutazioni d'impatto sui diritti fondamentali periodiche", "con_3", 2.0, False, "CONTESTO")
 
     with tabs[6]:
-        st.subheader("ANALISI LEXICOMETRICA DEI TESTI")
+        st.subheader("ANALISI DEI TESTI")
         st.caption("LA PRESENZA DI ANCHE UN SOLO ELEMENTO DETERMINA UN RISCHIO BIAS.")
         
         c1, c2 = st.columns(2)
@@ -246,8 +246,8 @@ with col_input:
         st.session_state.punti_testo = 1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
 
     with tabs[7]:
-        st.subheader("ANALISI SOCIOLOGICA DELLE IMMAGINI")
-        st.caption("CALCOLO DELL'INDICE DI RISCHIO ADDITIVO BASATO SULLE VARIABILI DI GOFFMAN.")
+        st.subheader("ANALISI DELLE IMMAGINI")
+        st.caption("CALCOLO DELL'INDICE DI RISCHIO ADDITIVO BASATO SU SISTEMA A PIÙ VARIABILI.")
 
         with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
             score_f = 0.0
