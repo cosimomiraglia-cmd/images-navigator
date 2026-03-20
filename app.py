@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 
 # Configurazione Pagina
-st.set_page_config(page_title="IMAGES Developer Guidelines, layout="wide")
+st.set_page_config(page_title="IMAGES Developer Guidelines", layout="wide")
 
 # --- 1. IDENTITÀ ISTITUZIONALE ---
 st.title("🛡️ Sistema integrato di audit per l'inclusività algoritmica")
