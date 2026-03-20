@@ -313,7 +313,7 @@ punteggio_finale = st.session_state.punti_sistema * moltiplicatore
 soglia = DOMINI[dominio_scelto]["threshold"]
 
 with col_risultati:
-    # 1. Impostazione colori e testi semaforici per l'avviso di rischio sistemico
+    # 1. Impostazione colori e testi semaforici
     if punteggio_finale >= soglia:
         bg_alert = "#f8d7da"
         color_alert = "#721c24"
@@ -342,25 +342,23 @@ with col_risultati:
     else:
         img_status = "🟢 RISCHIO BASSO"
 
-    # 3. HTML Unico: Inseriamo TUTTO qui per evitare che Streamlit "spezzi" la visualizzazione
-    html_scorecard = f"""
-    <div class="result-card">
-        <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
-        <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">RISCHI SISTEMICI (LIV. 2-6)</p>
-        <div style="background-color:{bg_alert}; color:{color_alert}; padding:15px; border-radius:10px; font-weight:bold; font-size:16px; margin-bottom:10px;">
-            {alert_text}
-        </div>
-        {warn_html}
-        <hr style="border-top:1px solid {C_MEDIUM}; margin: 25px 0;">
-        <p style="font-weight:bold; color:{C_DARK};">STATO DEGLI OUTPUT</p>
-        <p style="margin:8px 0; color:{C_DARK};"><strong>TESTI:</strong> {testo_status}</p>
-        <p style="margin:8px 0; color:{C_DARK};"><strong>IMMAGINI:</strong> {img_status}</p>
-    </div>
-    """
+    # 3. HTML Unico ALLINEATO A SINISTRA per evitare il bug del Markdown
+    html_scorecard = f"""<div class="result-card">
+<h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
+<p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">RISCHI SISTEMICI (LIV. 2-6)</p>
+<div style="background-color:{bg_alert}; color:{color_alert}; padding:15px; border-radius:10px; font-weight:bold; font-size:16px; margin-bottom:10px;">
+{alert_text}
+</div>
+{warn_html}
+<hr style="border-top:1px solid {C_MEDIUM}; margin: 25px 0;">
+<p style="font-weight:bold; color:{C_DARK};">STATO DEGLI OUTPUT</p>
+<p style="margin:8px 0; color:{C_DARK};"><strong>TESTI:</strong> {testo_status}</p>
+<p style="margin:8px 0; color:{C_DARK};"><strong>IMMAGINI:</strong> {img_status}</p>
+</div>"""
     
-    # 4. Rendering dell'intero blocco visivo in un colpo solo
+    # 4. Rendering dell'intero blocco visivo
     st.markdown(html_scorecard, unsafe_allow_html=True)
-    st.write("") # Piccolo spazio per staccare il pulsante
+    st.write("") 
 
     # 5. Generazione del Report Testuale da scaricare
     report_data = f"AUDIT IMAGES NAVIGATOR - {dominio_scelto}\n"
@@ -386,4 +384,4 @@ with col_risultati:
     )
 
 st.divider()
-st.caption(f"PROGETTO PRIN PNRR | IMAGES NAVIGATOR | {datetime.now().year}")
+st.caption(f"PROGETTO PRIN PNRR | IMAGES | {datetime.now().year}")
