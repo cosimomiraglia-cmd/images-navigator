@@ -109,4 +109,56 @@ with col_input:
         with c_txt:
             st.markdown("**7.2 Testi (Soglia >= 1)**")
             t1 = st.checkbox("Uso del maschile sovraesteso ('uomini').", key="t1")
-            t2 = st.checkbox("Presenza di stere
+            t2 = st.checkbox("Presenza di stereotipi o metafore degradanti.", key="t2")
+            t3 = st.checkbox("Assenza di controllo sistematico parole chiave.", key="t3")
+            punti_txt = sum([t1, t2, t3])
+
+    with tabs[8]:
+        st.write("Usa la colonna a destra per visualizzare i risultati e scaricare il report.")
+
+# --- COLONNA DESTRA: SEZIONE 7 (RISULTATI SEMPRE VISIBILI) ---
+with col_risultati:
+    st.header("⚖️ Scorecard di rischio")
+    st.info("I risultati si aggiornano dinamicamente mentre completi l'audit.")
+    
+    # BOX 1: SISTEMA
+    st.subheader("Rischi sistemici (Liv. 2-6)")
+    if critici_sistema >= 4:
+        st.error(f"🔴 ALTO ({critici_sistema} criticità)")
+    elif 2 <= critici_sistema <= 3:
+        st.warning(f"🟡 MEDIO ({critici_sistema} criticità)")
+    else:
+        st.success("🟢 BASSO (Stato ottimale)")
+    
+    # BOX 2: IMMAGINI
+    st.subheader("Rischio nelle immagini (7.1)")
+    if punti_img >= 2:
+        st.error(f"🔴 ALTO ({punti_img} pattern)")
+    else:
+        st.success("🟢 BASSO")
+        
+    # BOX 3: TESTI
+    st.subheader("Rischio nei esti (7.2)") # Mantenuta etichetta originale
+    if punti_txt >= 1:
+        st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
+    else:
+        st.success("🟢 NON RILEVATO")
+
+    st.divider()
+
+    # --- ESPORTAZIONE REPORT ---
+    report_txt = f"""REPORT DI CONFORMITÀ IMAGES - PRIN PNRR
+Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+--------------------------------------------------
+VERDETTO FINALE:
+- Rischio Sistema: {critici_sistema} criticità
+- Rischio Immagini: {punti_img} pattern rilevati
+- Rischio Testi: {punti_txt} occorrenze rilevate
+--------------------------------------------------
+DETTAGLIO AUDIT:
+""" + "\n".join(dettagli_audit)
+
+    st.download_button("📥 Scarica Report Tecnico (TXT)", report_txt, file_name="Audit_IMAGES_PNRR.txt", use_container_width=True)
+
+st.divider()
+st.caption("Toolkit IMAGES | Progetto PRIN PNRR | Risposta automatica basata sui dati di input.")
