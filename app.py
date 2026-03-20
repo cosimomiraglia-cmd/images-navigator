@@ -185,7 +185,7 @@ with col_input:
         render_audit_item("Coinvolgimento preventivo degli stakeholder o gruppi vulnerabili", "prep_3", tag="PREP")
 
     with tabs[1]:
-        st.subheader("LIVELLO DATI")
+        st.subheader("DATI")
         w_dati = 3.0 if dominio_scelto in ["SANITA E WELFARE", "GIUSTIZIA E SICUREZZA"] else 1.5
         render_audit_item("Mancato confronto dei dati di training con la demografia reale", "dat_1", w_dati, True, "DATI")
         render_audit_item("Presenza di etichette storicamente stereotipate nel dataset", "dat_2", w_dati, False, "DATI")
@@ -193,7 +193,7 @@ with col_input:
         render_audit_item("Mancanza di documentazione strutturata sui rischi (es. Data Sheet)", "dat_4", w_dati, False, "DATI")
 
     with tabs[2]:
-        st.subheader("LIVELLO TEAM")
+        st.subheader("TEAM")
         w_team = 2.5 if dominio_scelto == "RECRUITING E HR" else 1.5
         render_audit_item("Omogeneità demografica del team di sviluppo e design", "tea_1", w_team, False, "TEAM")
         render_audit_item("Mancata identificazione di variabili proxy per gruppi protetti", "tea_2", w_team, True, "TEAM")
@@ -201,7 +201,7 @@ with col_input:
         render_audit_item("Assenza di un registro decisionale tracciabile per le scelte di design", "tea_4", w_team, False, "TEAM")
 
     with tabs[3]:
-        st.subheader("LIVELLO MODELLO")
+        st.subheader("MODELLO")
         w_mod = 3.0 if dominio_scelto in ["SANITA E WELFARE", "FINANZA E CREDITO"] else 2.0
         render_audit_item("Mancato calcolo delle metriche di performance disaggregate per gruppo", "mod_1", w_mod, True, "MODELLO")
         render_audit_item("Assenza di test mirati con prompt sensibili o avversariali", "mod_2", w_mod, True, "MODELLO")
@@ -209,14 +209,14 @@ with col_input:
         render_audit_item("Mancata implementazione di filtri per mitigare le disparità rilevate", "mod_4", w_mod, False, "MODELLO")
 
     with tabs[4]:
-        st.subheader("LIVELLO UTENTI")
+        st.subheader("UTENTI")
         w_ut = 3.0 if dominio_scelto == "MARKETING E MEDIA" else 1.5
         render_audit_item("Mancata analisi del rischio di echo-chamber o polarizzazione", "ute_1", w_ut, False, "UTENTI")
         render_audit_item("Assenza di canali accessibili per segnalare output ingiusti", "ute_2", w_ut, False, "UTENTI")
         render_audit_item("Interfaccia utente non accessibile o progettata in modo escludente", "ute_3", w_ut, True, "UTENTI")
 
     with tabs[5]:
-        st.subheader("LIVELLO CONTESTO")
+        st.subheader("CONTESTO")
         render_audit_item("Non conformità alle normative vigenti (es. AI Act, GDPR)", "con_1", 2.5, False, "CONTESTO")
         render_audit_item("Assenza di meccanismi di governance partecipativa e supervisione", "con_2", 2.0, False, "CONTESTO")
         render_audit_item("Mancanza di valutazioni d'impatto sui diritti fondamentali periodiche", "con_3", 2.0, False, "CONTESTO")
