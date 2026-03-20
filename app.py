@@ -163,7 +163,15 @@ def render_audit_item(label, key, weight=1.0, is_identity=False, tag=""):
     return checked
 
 # --- LAYOUT PRINCIPALE ---
-st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES NAVIGATOR</h1>", unsafe_allow_html=True)
+col_logo, col_titolo = st.columns([0.08, 0.92]) # Proporzioni ottimali per un'icona affiancata
+
+with col_logo:
+    # Inserisci qui il nome esatto del file del tuo logo
+    st.image("Logo Images senza testo in alpha.png", use_container_width=True) 
+    
+with col_titolo:
+    # Titolo ripulito dall'emoji e allineato all'immagine
+    st.markdown(f"<h1 style='color:{C_PRIMARY}; margin-top: -10px;'>IMAGES NAVIGATOR</h1>", unsafe_allow_html=True)
 st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR IMAGES")
 st.write("") # Spaziatura
 
