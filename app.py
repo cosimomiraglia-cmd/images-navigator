@@ -167,7 +167,7 @@ col_logo, col_titolo = st.columns([0.08, 0.92]) # Proporzioni ottimali per un'ic
 
 with col_logo:
     # Inserisci qui il nome esatto del file del tuo logo
-    st.image("Logo Images senza testo in alpha.png", use_container_width=True) 
+    st.image("Logo_Images.png", use_container_width=True) 
     
 with col_titolo:
     # Titolo ripulito dall'emoji e allineato all'immagine
