@@ -1,104 +1,118 @@
 import streamlit as st
 from datetime import datetime
 
-# 1. Configurazione Pagina - Corretta virgoletta mancante
+# 1. Configurazione Pagina
 st.set_page_config(page_title="IMAGES Developer Guidelines", layout="wide")
+
+# --- DATASET PESI E DOMINI (Logica dell'Esperto) ---
+DOMINI = {
+    "Giustizia & Sicurezza": {"mult": 2.2, "threshold": 6.0},
+    "Sanità & Welfare": {"mult": 2.0, "threshold": 6.0},
+    "Pubblica Amministrazione": {"mult": 2.0, "threshold": 7.0},
+    "Finanza & Credito": {"mult": 1.9, "threshold": 7.5},
+    "Istruzione & Ricerca": {"mult": 1.8, "threshold": 8.0},
+    "Recruiting & HR": {"mult": 1.7, "threshold": 8.0},
+    "Marketing & Media": {"mult": 1.3, "threshold": 10.0},
+    "Gaming & Entertainment": {"mult": 1.1, "threshold": 12.0}
+}
 
 # --- 2. IDENTITÀ ISTITUZIONALE ---
 st.title("🛡️ Sistema integrato di audit per l'inclusività algoritmica")
+st.caption("Toolkit IMAGES | Progetto PRIN PNRR | Modello Four Levels (+1)")
 
-# --- 3. ORIENTAMENTO METODOLOGICO ---
-st.markdown("""
-Questo strumento operativo implementa il protocollo **IMAGES** per l'identificazione e la mitigazione dei bias di genere ed etnici. 
-L'equità del sistema viene valutata attraverso il modello **Four Levels (+1)**: *Dati, Team, Modello, Utenti e Contesto*.
----
-""")
+# --- 3. SELEZIONE CONTESTUALE (Passo 1 & 4) ---
+with st.sidebar:
+    st.header("⚙️ Configurazione Audit")
+    dominio_scelto = st.selectbox("Seleziona il dominio applicativo:", list(DOMINI.keys()))
+    st.info(f"**Configurazione:** {dominio_scelto}\n\nIl sistema applicherà pesi e soglie specifiche per questo settore, come previsto dal principio di selezione contestuale.")
+    st.divider()
+    st.markdown("🔍 *L'uso dello strumento è discrezionale. I risultati costituiscono una guida all'audit e non un verdetto automatico.*")
 
-# Inizializzazione variabili di scoring e report
-critici_sistema = 0 
-punti_img = 0       
-punti_txt = 0       
+# Inizializzazione variabili
+punti_sistema = 0.0
+cluster_identita = 0 # Per moltiplicatore intersezionale
 dettagli_audit = []
 
-# Funzione per gestire i task
-def audit_item(label, key, level_code=""):
+def audit_item(label, key, weight=1.0, is_identity=False, level_code=""):
+    global punti_sistema, cluster_identita
     c1, c2 = st.columns([1, 1])
     with c1:
         checked = st.checkbox(label, key=key)
     with c2:
         note = ""
         if checked:
-            note = st.text_input("Evidenza / Piano d'azione:", key=f"n_{key}", placeholder="Specificare l'evidenza o l'azione correttiva...")
+            punti_sistema += weight
+            if is_identity: cluster_identita += 1
+            note = st.text_input("Evidenza / Piano d'azione:", key=f"n_{key}", placeholder="Specificare l'evidenza...")
             if level_code:
-                dettagli_audit.append(f"[{level_code}] {label}\n   NOTA: {note if note else 'Nessuna nota inserita'}")
+                dettagli_audit.append(f"[{level_code}] {label}\n   NOTA: {note if note else 'Nessuna nota'}")
     return checked
 
-# --- DEFINIZIONE COLONNE PER RISULTATI SEMPRE A VISTA ---
+# --- LAYOUT A DUE COLONNE ---
 col_input, col_risultati = st.columns([0.65, 0.35], gap="large")
 
 with col_input:
-    # --- ARCHITETTURA TABS ---
-    tabs = st.tabs([
-        "0. Prep", "1. Procedura", "2. DATI", "3. TEAM", 
-        "4. MODELLO", "5. UTENTI", "6. CONTESTO (+1)", 
-        "8. OUTPUT CHECK", "7. RISULTATI & REPORT"
-    ])
+    tabs = st.tabs(["0. Prep", "1. Procedura", "2. DATI", "3. TEAM", "4. MODELLO", "5. UTENTI", "6. CONTESTO (+1)", "8. OUTPUT CHECK"])
 
     with tabs[0]:
         st.subheader("0. Prima di iniziare")
         audit_item("Ho definito il caso d’uso, i gruppi coinvolti e i potenziali impatti.", "s0_1")
-        audit_item("Ho selezionato un set minimo di indicatori per ciascun livello (Dati, Team, Modello, Utenti, Contesto).", "s0_2")
-        audit_item("Ho stabilito come misurare ogni indicatore (numeri, log, documenti, audit, survey).", "s0_3")
-        audit_item("Ho previsto almeno un momento di confronto con stakeholder/comunità impattate.", "s0_4")
+        audit_item("Ho selezionato un set minimo di indicatori per ciascun livello.", "s0_2")
+        audit_item("Ho stabilito come misurare ogni indicatore (log, survey, audit).", "s0_3")
+        audit_item("Ho previsto almeno un momento di confronto con stakeholder.", "s0_4")
 
     with tabs[1]:
         st.subheader("1. Procedura in 5 passi")
-        audit_item("(1) Scelgo solo gli indicatori rilevanti, evitando liste standard.", "s1_1")
+        audit_item("(1) Scelgo solo gli indicatori rilevanti per il dominio.", "s1_1")
         audit_item("(2) Associo a ogni indicatore almeno un’evidenza verificabile.", "s1_2")
-        audit_item("(3) Identifico gli indicatori critici per bias, fairness o inclusività.", "s1_3")
-        audit_item("(4) Peso maggiormente gli indicatori che hanno impatti umani gravi.", "s1_4")
-        audit_item("(5) Ripeto la procedura dopo aggiornamenti di dati, modelli o norme.", "s1_5")
+        audit_item("(3) Identifico gli indicatori critici per bias o inclusività.", "s1_3")
+        audit_item("(4) Peso maggiormente gli indicatori con impatti umani gravi.", "s1_4")
+        audit_item("(5) Ripeto la procedura dopo aggiornamenti tecnici o normativi.", "s1_5")
 
     with tabs[2]:
-        st.subheader("2. Livello DATI – chi è rappresentato e come")
-        if audit_item("Il dataset è confrontato con popolazione/target (genere, etnia, status, intersezionalità).", "s2_1", "DATI"): critici_sistema += 1
-        if audit_item("Ho verificato la presenza di linguaggio o etichette degradanti/stereotipate.", "s2_2", "DATI"): critici_sistema += 1
-        if audit_item("Dove esistono esclusioni storiche, ho adottato strategie di riequilibrio.", "s2_3", "DATI"): critici_sistema += 1
-        if audit_item("Ho documentato limiti, distorsioni e rischi del dataset.", "s2_4", "DATI"): critici_sistema += 1
+        st.subheader("2. Livello DATI")
+        # Pesi differenziati in base al dominio
+        w_dati = 3.0 if dominio_scelto in ["Sanità & Welfare", "Giustizia & Sicurezza"] else 1.5
+        audit_item("Il dataset NON è confrontato con popolazione/target reale.", "s2_1", weight=w_dati, is_identity=True, level_code="DATI")
+        audit_item("Rilevata presenza di linguaggio o etichette stereotipate.", "s2_2", weight=w_dati, level_code="DATI")
+        audit_item("Assenza di strategie di riequilibrio per esclusioni storiche.", "s2_3", weight=w_dati, is_identity=True, level_code="DATI")
+        audit_item("Mancata documentazione di limiti, distorsioni e rischi del dataset.", "s2_4", weight=w_dati, level_code="DATI")
 
     with tabs[3]:
-        st.subheader("3. Livello TEAM – chi decide e su quali basi")
-        if audit_item("Conosco la composizione del team e chi è escluso dai processi decisionali.", "s3_1", "TEAM"): critici_sistema += 1
-        if audit_item("Ho identificato variabili o proxy che colpiscono indirettamente gruppi protetti.", "s3_2", "TEAM"): critici_sistema += 1
-        if audit_item("Il team integra competenze non solo tecniche (studi sociali, DEI, diritto, dominio).", "s3_3", "TEAM"): critici_sistema += 1
-        if audit_item("Esiste un registro decisionale con razionali espliciti.", "s3_4", "TEAM"): critici_sistema += 1
-        if audit_item("Almeno una fase di sviluppo prevede una review su bias, fairness e inclusività.", "s3_5", "TEAM"): critici_sistema += 1
+        st.subheader("3. Livello TEAM")
+        w_team = 2.5 if dominio_scelto == "Recruiting & HR" else 1.5
+        audit_item("Composizione team omogenea o esclusioni decisionali non note.", "s3_1", weight=w_team, level_code="TEAM")
+        audit_item("Identificate variabili proxy che colpiscono gruppi protetti.", "s3_2", weight=w_team, is_identity=True, level_code="TEAM")
+        audit_item("Mancanza di competenze sociali/DEI/diritto nel team.", "s3_3", weight=w_team, level_code="TEAM")
+        audit_item("Assenza di un registro decisionale con razionali espliciti.", "s3_4", weight=w_team, level_code="TEAM")
+        audit_item("Mancanza di una review specifica su bias in fase di sviluppo.", "s3_5", weight=w_team, level_code="TEAM")
 
     with tabs[4]:
-        st.subheader("4. Livello MODELLO – performance e comportamento")
-        if audit_item("Ho calcolato metriche disaggregate per gruppo (FP/FN, accuracy, recall).", "s4_1", "MODELLO"): critici_sistema += 1
-        if audit_item("Ho testato il modello con input/prompt sensibili (genere, etnia, disabilità).", "s4_2", "MODELLO"): critici_sistema += 1
-        if audit_item("Dove emergono disparità, applico almeno una tecnica di mitigazione.", "s4_3", "MODELLO"): critici_sistema += 1
-        if audit_item("Mantengo una Model Card aggiornata con rischi, limiti e gruppi vulnerabili.", "s4_4", "MODELLO"): critici_sistema += 1
+        st.subheader("4. Livello MODELLO")
+        w_mod = 3.0 if dominio_scelto in ["Sanità & Welfare", "Finanza & Credito"] else 2.0
+        audit_item("Mancato calcolo metriche disaggregate (FP/FN, accuracy).", "s4_1", weight=w_mod, is_identity=True, level_code="MODELLO")
+        audit_item("Modello NON testato con prompt sensibili (genere/etnia).", "s4_2", weight=w_mod, is_identity=True, level_code="MODELLO")
+        audit_item("Nessuna tecnica di mitigazione applicata dove emergono disparità.", "s4_3", weight=w_mod, level_code="MODELLO")
+        audit_item("Model Card non aggiornata con rischi e gruppi vulnerabili.", "s4_4", weight=w_mod, level_code="MODELLO")
 
     with tabs[5]:
-        st.subheader("5. Livello UTENTI – uso reale, abusi, contestabilità")
-        if audit_item("Monitoro prompt abusivi e comportamenti discriminatori.", "s5_1", "UTENTI"): critici_sistema += 1
-        if audit_item("Osservo la formazione di echo-chamber e reinforcement loop.", "s5_2", "UTENTI"): critici_sistema += 1
-        if audit_item("Esistono canali semplici per segnalare esiti ingiusti.", "s5_3", "UTENTI"): critici_sistema += 1
-        if audit_item("Traccio quante segnalazioni portano a modifiche reali.", "s5_4", "UTENTI"): critici_sistema += 1
-        if audit_item("L’interfaccia è accessibile e testata con utenti vulnerabili.", "s5_5", "UTENTI"): critici_sistema += 1
+        st.subheader("5. Livello UTENTI")
+        w_ut = 3.0 if dominio_scelto == "Marketing & Media" else 1.5
+        audit_item("Mancato monitoraggio di comportamenti discriminatori.", "s5_1", weight=w_ut, level_code="UTENTI")
+        audit_item("Mancata osservazione di echo-chamber o reinforcement loop.", "s5_2", weight=w_ut, level_code="UTENTI")
+        audit_item("Assenza canali semplici per segnalare esiti ingiusti.", "s5_3", weight=w_ut, level_code="UTENTI")
+        audit_item("Mancata tracciabilità segnalazioni -> modifiche reali.", "s5_4", weight=w_ut, level_code="UTENTI")
+        audit_item("Interfaccia non accessibile o non testata con utenti vulnerabili.", "s5_5", weight=w_ut, is_identity=True, level_code="UTENTI")
 
     with tabs[6]:
-        st.subheader("6. Livello CONTESTO (+1) – norme, governance, poteri")
-        if audit_item("Il sistema è allineato a norme su privacy, discriminazione e IA.", "s6_1", "CONTESTO"): critici_sistema += 1
-        if audit_item("Esistono strutture di governance che includono gruppi impattati.", "s6_2", "CONTESTO"): critici_sistema += 1
-        if audit_item("L’organizzazione ha policy esplicite su fairness e inclusività.", "s6_3", "CONTESTO"): critici_sistema += 1
-        if audit_item("Sono previste valutazioni d’impatto e audit periodici.", "s6_4", "CONTESTO"): critici_sistema += 1
+        st.subheader("6. Livello CONTESTO (+1)")
+        audit_item("Sistema NON allineato a norme (AI Act, GDPR).", "s6_1", weight=2.5, level_code="CONTESTO")
+        audit_item("Assenza di governance che includa i gruppi impattati.", "s6_2", weight=2.0, level_code="CONTESTO")
+        audit_item("Mancanza di policy esplicite su fairness e inclusività.", "s6_3", weight=1.5, level_code="CONTESTO")
+        audit_item("Assenza di valutazioni d’impatto o audit periodici.", "s6_4", weight=2.0, level_code="CONTESTO")
 
     with tabs[7]:
         st.subheader("7. Controllo rapido su contenuti generati")
-        st.info("Esegui l'audit visivo e testuale a campione prima di consultare il verdetto finale.")
         c_img, c_txt = st.columns(2)
         with c_img:
             st.markdown("**7.1 Immagini (Soglia >= 2)**")
@@ -113,52 +127,49 @@ with col_input:
             t3 = st.checkbox("Assenza di controllo sistematico parole chiave.", key="t3")
             punti_txt = sum([t1, t2, t3])
 
-    with tabs[8]:
-        st.write("Usa la colonna a destra per visualizzare i risultati e scaricare il report.")
+# --- CALCOLO FINALE CON MOLTIPLICATORE ---
+moltiplicatore = DOMINI[dominio_scelto]["mult"] if cluster_identita > 1 else 1.0
+punteggio_finale = punti_sistema * moltiplicatore
+soglia_critica = DOMINI[dominio_scelto]["threshold"]
 
-# --- COLONNA DESTRA: SEZIONE 7 (RISULTATI SEMPRE VISIBILI) ---
 with col_risultati:
-    st.header("⚖️ Scorecard di rischio")
-    st.info("I risultati si aggiornano dinamicamente mentre completi l'audit.")
+    st.header("⚖️ 7. Scorecard di rischio")
     
-    # BOX 1: SISTEMA
-    st.subheader("Rischi sistemici")
-    if critici_sistema >= 4:
-        st.error(f"🔴 ALTO ({critici_sistema} criticità)")
-    elif 2 <= critici_sistema <= 3:
-        st.warning(f"🟡 MEDIO ({critici_sistema} criticità)")
+    if moltiplicatore > 1.0:
+        st.warning(f"⚠️ **Effetto Intersezionale:** Rilevate {cluster_identita} criticità su categorie protette. Il rischio è potenziato (x{moltiplicatore}).")
+
+    # BOX 1: SISTEMA (Pesato e Situato)
+    st.subheader("Rischi sistemici (Liv. 2-6)")
+    if punteggio_finale >= soglia_critica:
+        st.error(f"🔴 ALTO ({punteggio_finale:.1f} / {soglia_critica})")
+    elif punteggio_finale >= (soglia_critica / 2):
+        st.warning(f"🟡 MEDIO ({punteggio_finale:.1f} / {soglia_critica})")
     else:
-        st.success("🟢 BASSO (Stato ottimale)")
+        st.success(f"🟢 BASSO ({punteggio_finale:.1f} / {soglia_critica})")
     
     # BOX 2: IMMAGINI
-    st.subheader("Rischio nelle immagini")
-    if punti_img >= 2:
-        st.error(f"🔴 ALTO ({punti_img} pattern)")
-    else:
-        st.success("🟢 BASSO")
+    st.subheader("Rischio nelle immagini (7.1)")
+    if punti_img >= 2: st.error(f"🔴 ALTO ({punti_img} pattern)")
+    else: st.success("🟢 BASSO")
         
     # BOX 3: TESTI
-    st.subheader("Rischio nei esti") # Mantenuta etichetta originale
-    if punti_txt >= 1:
-        st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
-    else:
-        st.success("🟢 NON RILEVATO")
+    st.subheader("Rischio nei testi (7.2)")
+    if punti_txt >= 1: st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
+    else: st.success("🟢 NON RILEVATO")
 
     st.divider()
-
-    # --- ESPORTAZIONE REPORT ---
+    
+    # REPORT
     report_txt = f"""REPORT DI CONFORMITÀ IMAGES - PRIN PNRR
-Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+Dominio: {dominio_scelto} | Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}
 --------------------------------------------------
-VERDETTO FINALE:
-- Rischio Sistema: {critici_sistema} criticità
-- Rischio Immagini: {punti_img} pattern rilevati
-- Rischio Testi: {punti_txt} occorrenze rilevate
+7. VERDETTO FINALE:
+- Punteggio Sistema Pesato: {punteggio_finale:.2f} (Soglia: {soglia_critica})
+- Moltiplicatore Intersezionale applicato: {moltiplicatore}
+- Rischio Immagini: {punti_img} pattern
+- Rischio Testi: {punti_txt} occorrenze
 --------------------------------------------------
 DETTAGLIO AUDIT:
 """ + "\n".join(dettagli_audit)
 
-    st.download_button("📥 Scarica Report Tecnico (TXT)", report_txt, file_name="Audit_IMAGES_PNRR.txt", use_container_width=True)
-
-st.divider()
-st.caption("Toolkit IMAGES | Progetto PRIN PNRR | Risposta automatica basata sui dati di input.")
+    st.download_button("📥 Scarica Report Tecnico (TXT)", report_txt, file_name=f"Audit_IMAGES_{dominio_scelto}.txt", use_container_width=True)
