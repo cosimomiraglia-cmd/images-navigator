@@ -313,27 +313,26 @@ punteggio_finale = st.session_state.punti_sistema * moltiplicatore
 soglia = DOMINI[dominio_scelto]["threshold"]
 
 with col_risultati:
-    st.markdown(f"<div class='result-card'>", unsafe_allow_html=True)
-    st.markdown("### SCORECARD DI RISCHIO")
-    
-    st.markdown("**RISCHI SISTEMICI (LIV. 2-6)**")
+    # 1. Preparazione delle variabili visive per i Rischi Sistemici
     if punteggio_finale >= soglia:
-        st.error(f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}")
+        bg_alert = "#f8d7da"
+        color_alert = "#721c24"
+        alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
     elif punteggio_finale >= (soglia / 2):
-        st.warning(f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}")
+        bg_alert = "#fff3cd"
+        color_alert = "#856404"
+        alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
     else:
-        st.success(f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}")
-    
+        bg_alert = "#d4edda"
+        color_alert = "#155724"
+        alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
+        
+    warn_html = ""
     if moltiplicatore > 1.0:
-        st.markdown(f"<p style='color:{C_PRIMARY}; font-weight:bold;'>⚠️ EFFETTO INTERSEZIONALE ATTIVO (x{moltiplicatore})</p>", unsafe_allow_html=True)
+        warn_html = f"<p style='color:{C_PRIMARY}; font-weight:bold; margin-top:12px;'>⚠️ EFFETTO INTERSEZIONALE ATTIVO (x{moltiplicatore})</p>"
 
-    st.divider()
-
-    st.markdown("**STATO DEGLI OUTPUT**")
-    
+    # 2. Preparazione delle variabili per gli Output
     testo_status = "🔴 RISCHIO RILEVATO" if st.session_state.get("punti_testo", 0) > 0 else "🟢 NESSUN RISCHIO"
-    st.write(f"TESTI: {testo_status}")
-    
     img_labels = st.session_state.get("img_labels", ("BASSO", "BASSO", "BASSO"))
     
     if "ALTO" in img_labels:
@@ -342,11 +341,27 @@ with col_risultati:
         img_status = "🟡 RISCHIO MEDIO"
     else:
         img_status = "🟢 RISCHIO BASSO"
-        
-    st.write(f"IMMAGINI: {img_status}")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 
+    # 3. Costruzione di un unico blocco HTML per la Card
+    html_scorecard = f"""
+    <div class="result-card">
+        <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
+        <p style="font-weight:bold; color:{C_DARK};">RISCHI SISTEMICI (LIV. 2-6)</p>
+        <div style="background-color:{bg_alert}; color:{color_alert}; padding:12px; border-radius:8px; font-weight:bold; font-size:15px; margin-bottom:10px;">
+            {alert_text}
+        </div>
+        {warn_html}
+        <hr style="border-top:1px solid {C_MEDIUM}; margin: 20px 0;">
+        <p style="font-weight:bold; color:{C_DARK};">STATO DEGLI OUTPUT</p>
+        <p style="margin:5px 0; color:{C_DARK};"><strong>TESTI:</strong> {testo_status}</p>
+        <p style="margin:5px 0; color:{C_DARK};"><strong>IMMAGINI:</strong> {img_status}</p>
+    </div>
+    """
+    
+    # Renderizzazione della Card
+    st.markdown(html_scorecard, unsafe_allow_html=True)
+
+    # 4. Generazione del Report Testuale (invariata)
     report_data = f"AUDIT IMAGES NAVIGATOR - {dominio_scelto}\n"
     report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
     report_data += "-" * 50 + "\n"
@@ -370,4 +385,4 @@ with col_risultati:
     )
 
 st.divider()
-st.caption(f"PROGETTO PRIN PNRR | IMAGES NAVIGATOR | {datetime.now().year}")
+st.caption(f"PROGETTO PRIN PNRR | IMAGES | {datetime.now().year}")
