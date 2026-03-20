@@ -313,7 +313,7 @@ punteggio_finale = st.session_state.punti_sistema * moltiplicatore
 soglia = DOMINI[dominio_scelto]["threshold"]
 
 with col_risultati:
-    # 1. Preparazione delle variabili visive per i Rischi Sistemici
+    # 1. Impostazione colori e testi semaforici per l'avviso di rischio sistemico
     if punteggio_finale >= soglia:
         bg_alert = "#f8d7da"
         color_alert = "#721c24"
@@ -331,7 +331,7 @@ with col_risultati:
     if moltiplicatore > 1.0:
         warn_html = f"<p style='color:{C_PRIMARY}; font-weight:bold; margin-top:12px;'>⚠️ EFFETTO INTERSEZIONALE ATTIVO (x{moltiplicatore})</p>"
 
-    # 2. Preparazione delle variabili per gli Output
+    # 2. Calcolo degli esiti per gli Output
     testo_status = "🔴 RISCHIO RILEVATO" if st.session_state.get("punti_testo", 0) > 0 else "🟢 NESSUN RISCHIO"
     img_labels = st.session_state.get("img_labels", ("BASSO", "BASSO", "BASSO"))
     
@@ -342,26 +342,27 @@ with col_risultati:
     else:
         img_status = "🟢 RISCHIO BASSO"
 
-    # 3. Costruzione di un unico blocco HTML per la Card
+    # 3. HTML Unico: Inseriamo TUTTO qui per evitare che Streamlit "spezzi" la visualizzazione
     html_scorecard = f"""
     <div class="result-card">
         <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
-        <p style="font-weight:bold; color:{C_DARK};">RISCHI SISTEMICI (LIV. 2-6)</p>
-        <div style="background-color:{bg_alert}; color:{color_alert}; padding:12px; border-radius:8px; font-weight:bold; font-size:15px; margin-bottom:10px;">
+        <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">RISCHI SISTEMICI (LIV. 2-6)</p>
+        <div style="background-color:{bg_alert}; color:{color_alert}; padding:15px; border-radius:10px; font-weight:bold; font-size:16px; margin-bottom:10px;">
             {alert_text}
         </div>
         {warn_html}
-        <hr style="border-top:1px solid {C_MEDIUM}; margin: 20px 0;">
+        <hr style="border-top:1px solid {C_MEDIUM}; margin: 25px 0;">
         <p style="font-weight:bold; color:{C_DARK};">STATO DEGLI OUTPUT</p>
-        <p style="margin:5px 0; color:{C_DARK};"><strong>TESTI:</strong> {testo_status}</p>
-        <p style="margin:5px 0; color:{C_DARK};"><strong>IMMAGINI:</strong> {img_status}</p>
+        <p style="margin:8px 0; color:{C_DARK};"><strong>TESTI:</strong> {testo_status}</p>
+        <p style="margin:8px 0; color:{C_DARK};"><strong>IMMAGINI:</strong> {img_status}</p>
     </div>
     """
     
-    # Renderizzazione della Card
+    # 4. Rendering dell'intero blocco visivo in un colpo solo
     st.markdown(html_scorecard, unsafe_allow_html=True)
+    st.write("") # Piccolo spazio per staccare il pulsante
 
-    # 4. Generazione del Report Testuale (invariata)
+    # 5. Generazione del Report Testuale da scaricare
     report_data = f"AUDIT IMAGES NAVIGATOR - {dominio_scelto}\n"
     report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
     report_data += "-" * 50 + "\n"
@@ -385,4 +386,4 @@ with col_risultati:
     )
 
 st.divider()
-st.caption(f"PROGETTO PRIN PNRR | IMAGES | {datetime.now().year}")
+st.caption(f"PROGETTO PRIN PNRR | IMAGES NAVIGATOR | {datetime.now().year}")
