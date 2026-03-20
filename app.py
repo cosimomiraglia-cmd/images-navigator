@@ -122,7 +122,7 @@ with col_risultati:
     st.info("I risultati si aggiornano dinamicamente mentre completi l'audit.")
     
     # BOX 1: SISTEMA
-    st.subheader("Rischi sistemici (Liv. 2-6)")
+    st.subheader("Rischi sistemici")
     if critici_sistema >= 4:
         st.error(f"🔴 ALTO ({critici_sistema} criticità)")
     elif 2 <= critici_sistema <= 3:
@@ -131,14 +131,14 @@ with col_risultati:
         st.success("🟢 BASSO (Stato ottimale)")
     
     # BOX 2: IMMAGINI
-    st.subheader("Rischio nelle immagini (7.1)")
+    st.subheader("Rischio nelle immagini")
     if punti_img >= 2:
         st.error(f"🔴 ALTO ({punti_img} pattern)")
     else:
         st.success("🟢 BASSO")
         
     # BOX 3: TESTI
-    st.subheader("Rischio nei esti (7.2)") # Mantenuta etichetta originale
+    st.subheader("Rischio nei esti") # Mantenuta etichetta originale
     if punti_txt >= 1:
         st.error(f"🔴 RILEVATO ({punti_txt} occorrenze)")
     else:
