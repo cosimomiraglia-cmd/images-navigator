@@ -92,8 +92,6 @@ st.markdown(f"""
     """, unsafe_allow_html=True)
 
 # --- DIZIONARIO DEI DOMINI APPLICATIVI ---
-# DEFINIZIONE DELLE SOGLIE E DEI MOLTIPLICATORI INTERSEZIONALI (M_INT)
-# LE SOGLIE (THRESHOLD) DEFINISCONO IL PASSAGGIO DA RISCHIO MEDIO AD ALTO
 DOMINI = {
     "GIUSTIZIA E SICUREZZA": {"mult": 2.2, "threshold": 6.0},
     "SANITA E WELFARE": {"mult": 2.0, "threshold": 6.0},
@@ -105,8 +103,7 @@ DOMINI = {
     "GAMING E ENTERTAINMENT": {"mult": 1.1, "threshold": 12.0}
 }
 
-# --- PARAMETRI PER IL CALCOLO DELL'OUTPUT (FONTE: LINEE GUIDA IMAGES) ---
-# PUNTEGGI ADDITIVI PER STEREOTIPI DI GENERE (PERSONAGGIO SINGOLO)
+# --- PARAMETRI PER IL CALCOLO DELL'OUTPUT ---
 SCORE_IMG_GENDER = {
     "DONNA TOCCA SE STESSA": 1.0,
     "DONNA TOCCA UN OGGETTO": 1.0,
@@ -119,7 +116,6 @@ SCORE_IMG_GENDER = {
     "CORPO NON MOSTRATO INTERAMENTE": 0.5
 }
 
-# PUNTEGGI PER INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)
 SCORE_IMG_INTERACT = {
     "DONNA SORRIDENTE / UOMO SERIO": 1.0,
     "DONNA STAZIONARIA / UOMO IN AZIONE": 1.0,
@@ -131,7 +127,6 @@ SCORE_IMG_INTERACT = {
     "SGUARDO UOMO DIRETTO / DONNA DISTOLTO": 1.0
 }
 
-# PUNTEGGI PER STEREOTIPI ETNICI
 SCORE_IMG_ETHNIC = {
     "BIANCHI IN PRIMO PIANO / ALTRE ETNIE SFONDO": 1.0,
     "BIANCHI RITRATTI PIÙ ALTI": 1.0,
@@ -145,28 +140,30 @@ if 'punti_sistema' not in st.session_state:
     st.session_state.cluster_identita = 0
     st.session_state.dettagli_audit = []
 
+# --- SIDEBAR E IMPOSTAZIONI ---
+with st.sidebar:
+    st.markdown(f"<h2 style='color:{C_PRIMARY};'>IMPOSTAZIONI</h2>", unsafe_allow_html=True)
+    dominio_scelto = st.selectbox("DOMINIO APPLICATIVO", list(DOMINI.keys()))
+    st.divider()
+    st.markdown("**NOTA METODOLOGICA**")
+    st.caption("LO STRUMENTO OPERA SECONDO IL MODELLO FOUR LEVELS (+1). I RISULTATI SONO BASATI SUL PRINCIPIO DI PONDERAZIONE DINAMICA E SUL CALCOLO SOCIOLOGICO ADDITIVO.")
+
 # --- FUNZIONE DI SUPPORTO PER GLI INDICATORI ---
 def render_audit_item(label, key, weight=1.0, is_identity=False, tag=""):
-    """
-    RENDE UN ELEMENTO DI AUDIT CON CHECKBOX E CAMPO NOTA.
-    IL PESO (WEIGHT) VIENE SOMMATO SOLO SE LA CASELLA È SPUNTATA.
-    """
     col_check, col_note = st.columns([1.2, 1])
     with col_check:
-        # FORZIAMO IL MAIUSCOLO NELLA LABEL
         checked = st.checkbox(label.upper(), key=key)
     with col_note:
         nota = ""
         if checked:
-            # IL CAMPO NOTA APPARE SOLO SE IL RISCHIO È ATTIVO
             nota = st.text_input("EVIDENZA / AZIONE", key=f"note_{key}", placeholder="DESCRIZIONE...").upper()
-            
-            # AGGIORNAMENTO DELLO STATO (LOGICA BINARIA: C'È O NON C'È)
             st.session_state.punti_sistema += weight
             if is_identity:
                 st.session_state.cluster_identita += 1
             if tag:
-                st.session_state.dettagli_audit.append(f"[{tag}] {label.upper()} | NOTA: {nota}")
+                # Correzione applicata: gestisce il campo nota vuoto
+                nota_str = nota if nota.strip() else "NESSUN DETTAGLIO FORNITO"
+                st.session_state.dettagli_audit.append(f"[{tag}] {label.upper()} | NOTA: {nota_str}")
     return checked
 
 # --- COSTRUZIONE DEI TAB SISTEMICI ---
@@ -176,7 +173,7 @@ st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
 col_input, col_risultati = st.columns([0.65, 0.35], gap="large")
 
 with col_input:
-    # RESET DEI PUNTI AD OGNI RERUN PER EVITARE ACCUMULI ERRATI
+    # RESET DEI PUNTI AD OGNI RERUN
     st.session_state.punti_sistema = 0.0
     st.session_state.cluster_identita = 0
     st.session_state.dettagli_audit = []
@@ -226,93 +223,91 @@ with col_input:
         render_audit_item("ASSENZA DI GOVERNANCE PARTECIPATIVA", "con_2", 2.0, False, "CONTESTO")
         render_audit_item("MANCANZA DI VALUTAZIONI D'IMPATTO PERIODICHE", "con_3", 2.0, False, "CONTESTO")
 
-# --- LOGICA DI CALCOLO PER GLI OUTPUT ---
-
-with tabs[6]:
-    st.subheader("CONTROLLO OUTPUT: ANALISI TESTI E IMMAGINI")
-    
-    # SOTTOTAB PER SEPARARE LE LOGICHE DI VALIDAZIONE
-    tab_testi, tab_immagini = st.tabs(["VALIDAZIONE TESTI", "VALIDAZIONE IMMAGINI"])
-
-    with tab_testi:
-        st.markdown("#### ANALISI LEXICOMETRICA DEI BIAS")
-        st.caption("SECONDO LE LINEE GUIDA, LA PRESENZA DI ANCHE UN SOLO ELEMENTO DETERMINA UN RISCHIO BIAS.")
+    with tabs[6]:
+        st.subheader("CONTROLLO OUTPUT: ANALISI TESTI E IMMAGINI")
         
-        # INDICATORI TESTO (FONTE: LINEE GUIDA TESTI)
-        bias_testo_attivi = []
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("**GENERE**")
-            t1 = st.checkbox("UOMO/UOMINI USATI IN SENSO UNIVERSALE", key="t_g1")
-            t2 = st.checkbox("ACCORDO AL MASCHILE CON MAGGIORANZA FEMMINILE", key="t_g2")
-            t3 = st.checkbox("ASIMMETRIA NOMI/COGNOMI/TITOLI (ES. SIGNORA)", key="t_g3")
-            t4 = st.checkbox("PROFESSIONI AL MASCHILE O CON SUFFISSO 'DONNA'", key="t_g4")
-            t5 = st.checkbox("AGGETTIVI DI FRAGILITÀ O DIMINUTIVI", key="t_g5")
-            t6 = st.checkbox("IDENTIFICAZIONE RELAZIONALE (ES. MOGLIE DI)", key="t_g6")
-            t7 = st.checkbox("TERMINI D'ODIO O ANIMALI DEROGATORI", key="t_g7")
-        
-        with c2:
-            st.markdown("**ETNIA**")
-            t8 = st.checkbox("STEREOTIPI COMPARATIVI (ES. FUMARE COME UN TURCO)", key="t_e1")
-            t9 = st.checkbox("ANTONOMASIA STEREOTIPICA (ES. SVIZZERO PRECISO)", key="t_e2")
-            t10 = st.checkbox("GENERALIZZAZIONI ETNICHE O TERMINI RAZZISTI", key="t_e3")
-            t11 = st.checkbox("DEUMANIZZAZIONE (ASSOCIAZIONI ANIMALI)", key="t_e4")
+        tab_testi, tab_immagini = st.tabs(["VALIDAZIONE TESTI", "VALIDAZIONE IMMAGINI"])
 
-        # IL RISCHIO TESTO È BINARIO: 1 SE ALMENO UNO È SPUNTATO, 0 ALTRIMENTI
-        st.session_state.punti_testo = 1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
-
-    with tab_immagini:
-        st.markdown("#### ANALISI SOCIOLOGICA DELLE IMMAGINI")
-        st.caption("CALCOLO DELL'INDICE DI RISCHIO ADDITIVO BASATO SULLE VARIABILI DI GOFFMAN.")
-
-        # SEZIONE A: PERSONAGGI FEMMINILI SINGOLI
-        with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
-            score_f = 0.0
-            for label, peso in SCORE_IMG_GENDER.items():
-                if st.checkbox(label, key=f"img_f_{label}"):
-                    score_f += peso
+        with tab_testi:
+            st.markdown("#### ANALISI LEXICOMETRICA DEI BIAS")
+            st.caption("SECONDO LE LINEE GUIDA, LA PRESENZA DI ANCHE UN SOLO ELEMENTO DETERMINA UN RISCHIO BIAS.")
             
-            # DETERMINAZIONE LIVELLO RISCHIO F (SOGLIE: 2, 4)
-            label_f = "BASSO"
-            if score_f > 4: label_f = "ALTO"
-            elif score_f > 2: label_f = "MEDIO"
-            st.markdown(f"**INDICE RISCHIO (F): {score_f} / 6.0 ({label_f})**")
-
-        # SEZIONE B: INTERAZIONE MASCHILE / FEMMINILE
-        with st.expander("INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)"):
-            score_mf = 0.0
-            # AGGIUNGIAMO I PESI DELLA SEZIONE F (ECCETTO ALCUNI COME DA LINEE GUIDA)
-            for label, peso in SCORE_IMG_INTERACT.items():
-                if st.checkbox(label, key=f"img_mf_{label}"):
-                    score_mf += peso
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("**GENERE**")
+                t1 = st.checkbox("UOMO/UOMINI USATI IN SENSO UNIVERSALE", key="t_g1")
+                t2 = st.checkbox("ACCORDO AL MASCHILE CON MAGGIORANZA FEMMINILE", key="t_g2")
+                t3 = st.checkbox("ASIMMETRIA NOMI/COGNOMI/TITOLI (ES. SIGNORA)", key="t_g3")
+                t4 = st.checkbox("PROFESSIONI AL MASCHILE O CON SUFFISSO 'DONNA'", key="t_g4")
+                t5 = st.checkbox("AGGETTIVI DI FRAGILITÀ O DIMINUTIVI", key="t_g5")
+                t6 = st.checkbox("IDENTIFICAZIONE RELAZIONALE (ES. MOGLIE DI)", key="t_g6")
+                t7 = st.checkbox("TERMINI D'ODIO O ANIMALI DEROGATORI", key="t_g7")
             
-            # DETERMINAZIONE LIVELLO RISCHIO MF (SOGLIE: 4, 8)
-            label_mf = "BASSO"
-            if score_mf > 8: label_mf = "ALTO"
-            elif score_mf > 4: label_mf = "MEDIO"
-            st.markdown(f"**INDICE RISCHIO (M/F): {score_mf} / 12.0 ({label_mf})**")
+            with c2:
+                st.markdown("**ETNIA**")
+                t8 = st.checkbox("STEREOTIPI COMPARATIVI (ES. FUMARE COME UN TURCO)", key="t_e1")
+                t9 = st.checkbox("ANTONOMASIA STEREOTIPICA (ES. SVIZZERO PRECISO)", key="t_e2")
+                t10 = st.checkbox("GENERALIZZAZIONI ETNICHE O TERMINI RAZZISTI", key="t_e3")
+                t11 = st.checkbox("DEUMANIZZAZIONE (ASSOCIAZIONI ANIMALI)", key="t_e4")
 
-        # SEZIONE C: STEREOTIPI ETNICI
-        with st.expander("STEREOTIPI ETNICI NEI GRUPPI"):
-            score_e = 0.0
-            for label, peso in SCORE_IMG_ETHNIC.items():
-                if st.checkbox(label, key=f"img_e_{label}"):
-                    score_e += peso
-            
-            # DETERMINAZIONE LIVELLO RISCHIO E (SOGLIE: 1, 2)
-            label_e = "BASSO"
-            if score_e >= 3: label_e = "ALTO"
-            elif score_e == 2: label_e = "MEDIO"
-            st.markdown(f"**INDICE RISCHIO ETNICO: {score_e} / 3.0 ({label_e})**")
+            st.session_state.punti_testo = 1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
 
-        # SALVATAGGIO DEI PUNTEGGI MASSIMI PER LA SCORECARD FINALE
-        st.session_state.max_score_img = max(score_f, score_mf, score_e)
-        st.session_state.img_labels = (label_f, label_mf, label_e)
+        with tab_immagini:
+            st.markdown("#### ANALISI SOCIOLOGICA DELLE IMMAGINI")
+            st.caption("CALCOLO DELL'INDICE DI RISCHIO ADDITIVO BASATO SULLE VARIABILI DI GOFFMAN.")
 
-# --- BLOCCO 5: SCORECARD E REPORT FINALE ---
+            with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
+                score_f = 0.0
+                for label, peso in SCORE_IMG_GENDER.items():
+                    if st.checkbox(label, key=f"img_f_{label}"):
+                        score_f += peso
+                
+                label_f = "BASSO"
+                if score_f > 4: label_f = "ALTO"
+                elif score_f > 2: label_f = "MEDIO"
+                st.markdown(f"**INDICE RISCHIO (F): {score_f} / 6.0 ({label_f})**")
 
-# CALCOLO DEI PUNTEGGI SISTEMICI
+            with st.expander("INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)"):
+                score_mf = 0.0
+                
+                # 1. Variabili specifiche di interazione
+                for label, peso in SCORE_IMG_INTERACT.items():
+                    if st.checkbox(label, key=f"img_mf_{label}"):
+                        score_mf += peso
+                
+                st.divider()
+                st.caption("VARIABILI FEMMINILI APPLICABILI AL GRUPPO M/F:")
+                
+                # 2. Correzione applicata: ereditarietà delle variabili femminili con esclusioni
+                esclusioni = [
+                    "POSIZIONE SDRAIATA, INGINOCCHIATA O RECLINATA", 
+                    "SGUARDO DISTOLTO DALL'IMMAGINE"
+                ]
+                for label, peso in SCORE_IMG_GENDER.items():
+                    if label not in esclusioni:
+                        if st.checkbox(label, key=f"img_mf_inherit_{label}"):
+                            score_mf += peso
+                
+                label_mf = "BASSO"
+                if score_mf > 8: label_mf = "ALTO"
+                elif score_mf > 4: label_mf = "MEDIO"
+                st.markdown(f"**INDICE RISCHIO (M/F): {score_mf} / 12.0 ({label_mf})**")
+
+            with st.expander("STEREOTIPI ETNICI NEI GRUPPI"):
+                score_e = 0.0
+                for label, peso in SCORE_IMG_ETHNIC.items():
+                    if st.checkbox(label, key=f"img_e_{label}"):
+                        score_e += peso
+                
+                label_e = "BASSO"
+                if score_e >= 3: label_e = "ALTO"
+                elif score_e == 2: label_e = "MEDIO"
+                st.markdown(f"**INDICE RISCHIO ETNICO: {score_e} / 3.0 ({label_e})**")
+
+            st.session_state.max_score_img = max(score_f, score_mf, score_e)
+            st.session_state.img_labels = (label_f, label_mf, label_e)
+
+# --- SCORECARD E REPORT FINALE ---
 moltiplicatore = DOMINI[dominio_scelto]["mult"] if st.session_state.cluster_identita > 1 else 1.0
 punteggio_finale = st.session_state.punti_sistema * moltiplicatore
 soglia = DOMINI[dominio_scelto]["threshold"]
@@ -321,7 +316,6 @@ with col_risultati:
     st.markdown(f"<div class='result-card'>", unsafe_allow_html=True)
     st.markdown("### SCORECARD DI RISCHIO")
     
-    # RISCHI SISTEMICI (LIVELLI 2-6)
     st.markdown("**RISCHI SISTEMICI (LIV. 2-6)**")
     if punteggio_finale >= soglia:
         st.error(f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}")
@@ -330,20 +324,16 @@ with col_risultati:
     else:
         st.success(f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}")
     
-    # AVVISO INTERSEZIONALITÀ
     if moltiplicatore > 1.0:
         st.markdown(f"<p style='color:{C_PRIMARY}; font-weight:bold;'>⚠️ EFFETTO INTERSEZIONALE ATTIVO (x{moltiplicatore})</p>", unsafe_allow_html=True)
 
     st.divider()
 
-    # VALIDAZIONE OUTPUT (TESTI E IMMAGINI)
     st.markdown("**STATO DEGLI OUTPUT**")
     
-    # Recupero esito testi (Rischio binario)
     testo_status = "🔴 RISCHIO RILEVATO" if st.session_state.get("punti_testo", 0) > 0 else "🟢 NESSUN RISCHIO"
     st.write(f"TESTI: {testo_status}")
     
-    # Recupero esito immagini e determinazione del livello massimo di rischio
     img_labels = st.session_state.get("img_labels", ("BASSO", "BASSO", "BASSO"))
     
     if "ALTO" in img_labels:
@@ -357,7 +347,6 @@ with col_risultati:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # GENERAZIONE DEL REPORT TESTUALE
     report_data = f"AUDIT IMAGES NAVIGATOR - {dominio_scelto}\n"
     report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
     report_data += "-" * 50 + "\n"
@@ -373,7 +362,6 @@ with col_risultati:
     else:
         report_data += "NESSUNA EVIDENZA REGISTRATA DURANTE L'AUDIT."
 
-    # PULSANTE DI DOWNLOAD
     st.download_button(
         label="SCARICA REPORT TECNICO", 
         data=report_data, 
