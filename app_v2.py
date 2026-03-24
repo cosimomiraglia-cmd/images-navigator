@@ -56,11 +56,24 @@ st.markdown(f"""
 
     .result-card {{
         background-color: white;
-        padding: 35px;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        border-top: 8px solid {C_PRIMARY};
-        margin-top: 15px;
+        padding: 28px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        margin-bottom: 10px;
+    }}
+    .measure-label {{
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: {C_MEDIUM};
+        margin-bottom: 6px;
+    }}
+    .measure-value {{
+        font-size: 15px;
+        font-weight: 700;
+        padding: 12px 14px;
+        border-radius: 8px;
     }}
     h1, h2, h3, h4, .stButton button, .stDownloadButton button {{
         text-transform: uppercase;
@@ -84,6 +97,7 @@ st.markdown(f"""
 
 # ═══════════════════════════════════════════════════════════
 # DOMINI APPLICATIVI
+# Moltiplicatori ricalibrati: tetto minimo ×1.6
 # ═══════════════════════════════════════════════════════════
 DOMINI = {
     "GIUSTIZIA E SICUREZZA":    {"mult": 2.2, "threshold": 6.0},
@@ -97,12 +111,13 @@ DOMINI = {
 }
 
 # ═══════════════════════════════════════════════════════════
-# MATRICE INTERSEZIONALE — Proposta B (profondità dominante)
+# BENCHMARK PERCENTILI
+# Valori empirici: None finché non calibrati su dataset reale.
+# Il fallback teorico usa threshold come proxy p75 e p75/3 come p25.
 # ═══════════════════════════════════════════════════════════
-MATRICE_INTERSEZIONALE = {
-    (1, 1): 1.0,  (1, 2): 1.3,  (1, 3): 1.6,
-    (2, 1): 1.1,  (2, 2): 1.5,  (2, 3): None,
-    (3, 1): 1.2,  (3, 2): 1.6,  (3, 3): None,
+PERCENTILI_BENCHMARK = {
+    dominio: {"p25": None, "p75": None}
+    for dominio in DOMINI
 }
 
 TUTTE_DIMENSIONI = [
@@ -110,15 +125,93 @@ TUTTE_DIMENSIONI = [
     "disabilità", "orientamento", "status_socioeconomico"
 ]
 
+# ═══════════════════════════════════════════════════════════
+# MOLTIPLICATORE INTERSEZIONALE — Curva concava (Proposta B+)
+#
+# Logica: l'intersezionalità non è somma ma amplificazione.
+# La curva concava (esponente 0.6) enfatizza il salto qualitativo
+# nei primi assi attivi, coerentemente con la letteratura.
+# Saturazione normalizzata su massimo teorico: 3 dim × 5 liv = 15.
+# ═══════════════════════════════════════════════════════════
 def get_intersectional_multiplier(n_dim, n_livelli, dominio):
-    if n_dim == 0 or n_livelli == 0:
+    """
+    n_dim     : n. dimensioni protette attive (dichiarate + rilevate)
+    n_livelli : n. livelli pipeline con almeno un item spuntato
+    dominio   : chiave DOMINI
+    Restituisce il moltiplicatore ∈ [1.0, m_max].
+    """
+    if n_dim <= 1 or n_livelli <= 1:
         return 1.0
-    dim_key = min(n_dim, 3)
-    liv_key = min(n_livelli, 3)
-    valore = MATRICE_INTERSEZIONALE.get((dim_key, liv_key), 1.0)
-    if valore is None:
-        return DOMINI[dominio]["mult"]
-    return valore
+
+    m_max = DOMINI[dominio]["mult"]
+    saturazione = (n_dim * n_livelli) / 15
+    saturazione_curva = min(saturazione, 1.0) ** 0.6
+    valore = 1.0 + (m_max - 1.0) * saturazione_curva
+    return round(valore, 2)
+
+# ═══════════════════════════════════════════════════════════
+# METODO PERCENTILE CON FALLBACK TEORICO
+#
+# Se il benchmark empirico non è disponibile, usa:
+#   p75 = threshold del dominio (proxy del 75° percentile)
+#   p25 = p75 / 3              (terzile inferiore — difendibile come
+#                               limite prudenziale del rischio basso)
+# Il label "(Stima Teorica)" segnala all'utente l'assenza di dati reali.
+# ═══════════════════════════════════════════════════════════
+def esito_percentile(punteggio, dominio):
+    p = PERCENTILI_BENCHMARK.get(dominio, {})
+    soglia_teorica = DOMINI[dominio]["threshold"]
+
+    p75 = p.get("p75") or soglia_teorica
+    p25 = p.get("p25") or round(p75 / 3, 2)
+
+    is_empirical = p.get("p75") is not None
+    label_status = "" if is_empirical else " (Stima Teorica)"
+
+    if punteggio >= p75:
+        return f"🔴 ALTO (> 75° pct){label_status}", "#f8d7da", "#721c24"
+    if punteggio <= p25:
+        return f"🟢 BASSO (< 25° pct){label_status}", "#d4edda", "#155724"
+    return f"🟡 MEDIO (25°–75° pct){label_status}", "#fff3cd", "#856404"
+
+# ═══════════════════════════════════════════════════════════
+# METODO CONTEGGIO — Metodo operativo IMAGES
+#
+# Soglie dal Toolkit IMAGES:
+#   ≥ 4 indicatori critici → ALTO
+#   2–3 indicatori critici → MEDIO
+#   0–1 indicatori critici → BASSO
+# ═══════════════════════════════════════════════════════════
+def esito_conteggio(n):
+    if n >= 4:
+        return f"🔴 ALTO ({n} indicatori critici)", "#f8d7da", "#721c24"
+    elif n >= 2:
+        return f"🟡 MEDIO ({n} indicatori critici)", "#fff3cd", "#856404"
+    else:
+        return f"🟢 BASSO ({n} indicatori critici)", "#d4edda", "#155724"
+
+def conta_critici_per_livello():
+    """Restituisce {gruppo: n_critici} per visualizzazione breakdown."""
+    return {
+        gruppo: sum(
+            1 for item in items
+            if st.session_state.get(item["key"], False)
+        )
+        for gruppo, items in AUDIT_ITEMS.items()
+    }
+
+# ═══════════════════════════════════════════════════════════
+# METODO PUNTEGGIO PESATO
+#
+# Usa il colore basato sul confronto con la soglia di dominio.
+# ═══════════════════════════════════════════════════════════
+def esito_punteggio(punteggio_finale, soglia):
+    if punteggio_finale >= soglia:
+        return f"🔴 ALTO ({punteggio_finale:.1f} / {soglia})", "#f8d7da", "#721c24"
+    elif punteggio_finale >= soglia / 2:
+        return f"🟡 MEDIO ({punteggio_finale:.1f} / {soglia})", "#fff3cd", "#856404"
+    else:
+        return f"🟢 BASSO ({punteggio_finale:.1f} / {soglia})", "#d4edda", "#155724"
 
 # ═══════════════════════════════════════════════════════════
 # STRUTTURA DATI DEGLI ITEM DI AUDIT
@@ -318,8 +411,7 @@ def serialize_session(info):
             dati_audit[item["key"]] = st.session_state.get(item["key"], False)
             dati_audit[f"note_{item['key']}"] = st.session_state.get(f"note_{item['key']}", "")
 
-    testi_keys = [f"t_g{i}" for i in range(1, 8)] + [f"t_e{i}" for i in range(1, 5)]
-    for k in testi_keys:
+    for k in [f"t_g{i}" for i in range(1, 8)] + [f"t_e{i}" for i in range(1, 5)]:
         dati_audit[k] = st.session_state.get(k, False)
 
     for label in SCORE_IMG_GENDER:
@@ -448,8 +540,8 @@ with st.sidebar:
     st.markdown("**NOTA METODOLOGICA**")
     st.caption(
         "Strumento basato sul modello Four Levels (+1). "
-        "Il moltiplicatore intersezionale combina ampiezza identitaria "
-        "e profondità sistemica secondo la matrice IMAGES."
+        "Il metodo primario è il conteggio degli indicatori critici (Toolkit IMAGES). "
+        "Il punteggio pesato e il percentile forniscono letture complementari."
     )
 
 # ═══════════════════════════════════════════════════════════
@@ -581,7 +673,7 @@ with col_input:
         st.session_state.img_labels    = (label_f, label_mf, label_e)
 
 # ═══════════════════════════════════════════════════════════
-# CALCOLO PUNTEGGIO
+# CALCOLO PUNTEGGIO — indipendente dal tab attivo
 # ═══════════════════════════════════════════════════════════
 punteggio_base, dim_rilevate, liv_rilevati, dettagli_audit = calcola_punteggio(pesi_dinamici)
 
@@ -590,20 +682,23 @@ n_dim     = len(dimensioni_attive)
 n_livelli = len(liv_rilevati)
 
 moltiplicatore   = get_intersectional_multiplier(n_dim, n_livelli, dominio_scelto)
-punteggio_finale = punteggio_base * moltiplicatore
+punteggio_finale = round(punteggio_base * moltiplicatore, 2)
 soglia           = DOMINI[dominio_scelto]["threshold"]
 
+# Conteggio indicatori critici (metodo IMAGES primario)
+n_critici        = sum(
+    1 for items in AUDIT_ITEMS.values()
+    for item in items
+    if st.session_state.get(item["key"], False)
+)
+critici_per_livello = conta_critici_per_livello()
+
 # ═══════════════════════════════════════════════════════════
-# COLONNA RISULTATI — SCORECARD
+# COLONNA RISULTATI — SCORECARD A TRE MISURE
 # ═══════════════════════════════════════════════════════════
 with col_risultati:
 
-    n_item_compilati = sum(
-        1 for items in AUDIT_ITEMS.values()
-        for item in items
-        if st.session_state.get(item["key"], False)
-    )
-    audit_avviato = n_item_compilati > 0 or st.session_state.get("punti_testo", 0) > 0
+    audit_avviato = n_critici > 0 or st.session_state.get("punti_testo", 0) > 0
 
     if not audit_avviato:
         st.markdown(f"""
@@ -619,18 +714,75 @@ with col_risultati:
         """, unsafe_allow_html=True)
 
     else:
-        # ── Livello di rischio sistemico ──
-        if punteggio_finale >= soglia:
-            bg_alert, color_alert = "#f8d7da", "#721c24"
-            alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
-        elif punteggio_finale >= (soglia / 2):
-            bg_alert, color_alert = "#fff3cd", "#856404"
-            alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
-        else:
-            bg_alert, color_alert = "#d4edda", "#155724"
-            alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
+        # ── Calcola i tre esiti ──────────────────────────────────────
+        lbl_cnt, bg_cnt, fg_cnt   = esito_conteggio(n_critici)
+        lbl_pts, bg_pts, fg_pts   = esito_punteggio(punteggio_finale, soglia)
+        lbl_pct, bg_pct, fg_pct   = esito_percentile(punteggio_finale, dominio_scelto)
 
-        # ── Stato testi e immagini ──
+        # ── MISURA 1: Conteggio indicatori (IMAGES puro) — PRIMARIA ──
+        st.markdown(f"""
+            <div class="result-card" style="border-top: 6px solid {C_PRIMARY};">
+                <div class="measure-label">① METODO IMAGES — CONTEGGIO INDICATORI</div>
+                <div class="measure-value" style="background:{bg_cnt}; color:{fg_cnt};">
+                    {lbl_cnt}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Breakdown per livello
+        with st.expander("Dettaglio per livello"):
+            for gruppo, n in critici_per_livello.items():
+                _, bg, fg = esito_conteggio(n)
+                st.markdown(f"""
+                    <div style="display:flex; justify-content:space-between;
+                                align-items:center; padding:5px 0;
+                                border-bottom:1px solid #eee; font-size:13px;">
+                        <span style="color:{C_DARK}; font-weight:600;">{gruppo}</span>
+                        <span style="background:{bg}; color:{fg}; padding:2px 10px;
+                                     border-radius:6px; font-weight:700; font-size:12px;">
+                            {n} critici
+                        </span>
+                    </div>
+                """, unsafe_allow_html=True)
+
+        # ── MISURA 2: Punteggio pesato con moltiplicatore ────────────
+        st.markdown(f"""
+            <div class="result-card" style="border-top: 6px solid {C_MEDIUM};">
+                <div class="measure-label">② PUNTEGGIO PESATO (× INTERSEZIONALE)</div>
+                <div class="measure-value" style="background:{bg_pts}; color:{fg_pts};">
+                    {lbl_pts}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Dettaglio intersezionale — solo se attivo
+        if moltiplicatore > 1.0:
+            dim_labels = ", ".join(
+                d.replace("_", " ").title() for d in sorted(dimensioni_attive)
+            )
+            liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
+            st.markdown(f"""
+                <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
+                            border-radius:8px; padding:10px 14px; margin-top:-6px;
+                            margin-bottom:10px; font-size:12px; color:{C_DARK};">
+                    <strong style="color:{C_PRIMARY};">
+                        ⚠️ Intersezionale attivo ×{moltiplicatore}
+                    </strong><br>
+                    Dim.: {dim_labels or '—'} &nbsp;|&nbsp; Livelli: {liv_labels or '—'}
+                </div>
+            """, unsafe_allow_html=True)
+
+        # ── MISURA 3: Percentile ─────────────────────────────────────
+        st.markdown(f"""
+            <div class="result-card" style="border-top: 6px solid {C_MEDIUM};">
+                <div class="measure-label">③ POSIZIONE PERCENTILE</div>
+                <div class="measure-value" style="background:{bg_pct}; color:{fg_pct};">
+                    {lbl_pct}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # ── Stato output Testi e Immagini ────────────────────────────
         testo_status = (
             "🔴 RISCHIO RILEVATO"
             if st.session_state.get("punti_testo", 0) > 0
@@ -644,53 +796,13 @@ with col_risultati:
         else:
             img_status = "🟢 Rischio basso"
 
-        # ── PARTE 1: card principale ──
         st.markdown(f"""
             <div class="result-card">
-                <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
-                <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">
-                    RISCHI SISTEMICI (LIV. 1–5)
-                </p>
-                <div style="background-color:{bg_alert}; color:{color_alert};
-                            padding:15px; border-radius:10px; font-weight:bold;
-                            font-size:16px;">
-                    {alert_text}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # ── PARTE 2: blocco intersezionale — solo se attivo ──
-        if moltiplicatore > 1.0:
-            dim_labels = ", ".join(
-                d.replace("_", " ").title() for d in sorted(dimensioni_attive)
-            )
-            liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
-            st.markdown(f"""
-                <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
-                            border-radius:8px; padding:12px; margin-top:8px;">
-                    <p style="color:{C_PRIMARY}; font-weight:700; margin:0 0 6px 0;">
-                        ⚠️ EFFETTO INTERSEZIONALE ATTIVO (×{moltiplicatore:.1f})
-                    </p>
-                    <p style="color:{C_DARK}; font-size:13px; margin:0; line-height:1.6;">
-                        <strong>Dimensioni:</strong> {dim_labels or '—'}<br>
-                        <strong>Livelli implicati:</strong> {liv_labels or '—'}<br>
-                        <strong>Matrice:</strong> {n_dim} dim. × {n_livelli} liv.
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
-
-        # ── PARTE 3: stato output ──
-        st.markdown(f"""
-            <div style="background:white; border-radius:0 0 20px 20px;
-                        padding:20px 35px 25px 35px;
-                        box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-                <hr style="border-top:1px solid {C_MEDIUM}; margin:0 0 15px 0;">
-                <p style="font-weight:bold; color:{C_DARK}; text-transform:uppercase;
-                          letter-spacing:1px; margin-bottom:8px;">STATO DEGLI OUTPUT</p>
-                <p style="margin:8px 0; color:{C_DARK};">
+                <div class="measure-label">STATO DEGLI OUTPUT</div>
+                <p style="margin:6px 0; color:{C_DARK}; font-size:14px;">
                     <strong>TESTI:</strong> {testo_status}
                 </p>
-                <p style="margin:8px 0; color:{C_DARK};">
+                <p style="margin:6px 0; color:{C_DARK}; font-size:14px;">
                     <strong>IMMAGINI:</strong> {img_status}
                 </p>
             </div>
@@ -698,31 +810,39 @@ with col_risultati:
 
         st.write("")
 
-        # ── Report testuale scaricabile ──
+        # ── Report scaricabile ───────────────────────────────────────
         report_data  = f"AUDIT IMAGES NAVIGATOR — {dominio_scelto}\n"
         report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+        report_data += "=" * 50 + "\n"
+        report_data += "METODO IMAGES (CONTEGGIO):\n"
+        report_data += f"  Indicatori critici totali: {n_critici}\n"
+        report_data += f"  Esito: {lbl_cnt}\n"
+        report_data += "  Dettaglio per livello:\n"
+        for gruppo, n in critici_per_livello.items():
+            report_data += f"    {gruppo}: {n} critici\n"
         report_data += "-" * 50 + "\n"
-        report_data += f"PUNTEGGIO BASE:             {punteggio_base:.2f}\n"
-        report_data += f"MOLTIPLICATORE INTERSEZ.:   ×{moltiplicatore:.1f}\n"
-        report_data += f"PUNTEGGIO FINALE:           {punteggio_finale:.2f} (SOGLIA: {soglia})\n"
-
+        report_data += "PUNTEGGIO PESATO:\n"
+        report_data += f"  Base: {punteggio_base:.2f}\n"
+        report_data += f"  Moltiplicatore intersezionale: ×{moltiplicatore}\n"
+        report_data += f"  Finale: {punteggio_finale:.2f} (soglia dominio: {soglia})\n"
+        report_data += f"  Esito: {lbl_pts}\n"
         if moltiplicatore > 1.0:
-            dim_str = ", ".join(d.replace("_", " ").title() for d in sorted(dimensioni_attive))
-            liv_str = ", ".join(l.title() for l in sorted(liv_rilevati))
-            report_data += f"DIMENSIONI ATTIVE:          {dim_str}\n"
-            report_data += f"LIVELLI IMPLICATI:          {liv_str}\n"
-
-        report_data += f"ESITO TESTI:                {testo_status}\n"
+            report_data += f"  Dimensioni: {', '.join(sorted(dimensioni_attive))}\n"
+            report_data += f"  Livelli implicati: {', '.join(sorted(liv_rilevati))}\n"
+        report_data += "-" * 50 + "\n"
+        report_data += f"PERCENTILE: {lbl_pct}\n"
+        report_data += "-" * 50 + "\n"
+        report_data += f"TESTI: {testo_status}\n"
         report_data += (
-            f"ESITO IMMAGINI:             {img_status} "
+            f"IMMAGINI: {img_status} "
             f"(F: {img_labels[0]}, M/F: {img_labels[1]}, ETNIA: {img_labels[2]})\n"
         )
-        report_data += "-" * 50 + "\n"
-        report_data += "DETTAGLIO EVIDENZE E AZIONI RIPARATIVE:\n"
+        report_data += "=" * 50 + "\n"
+        report_data += "DETTAGLIO EVIDENZE:\n"
         report_data += (
             "\n".join(dettagli_audit)
             if dettagli_audit
-            else "Nessuna evidenza registrata durante l'audit."
+            else "Nessuna evidenza registrata."
         )
 
         st.download_button(
