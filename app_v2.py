@@ -639,56 +639,104 @@ soglia           = DOMINI[dominio_scelto]["threshold"]
 with col_risultati:
 
     # Scorecard condizionale: visibile solo se almeno un item è stato compilato
-    n_item_compilati = sum(
-        1 for items in AUDIT_ITEMS.values()
-        for item in items
-        if st.session_state.get(item["key"], False)
-    )
-    audit_avviato = n_item_compilati > 0 or st.session_state.get("punti_testo", 0) > 0
+        n_item_compilati = sum(
+            1 for items in AUDIT_ITEMS.values()
+            for item in items
+            if st.session_state.get(item["key"], False)
+        )
+        audit_avviato = n_item_compilati > 0 or st.session_state.get("punti_testo", 0) > 0
 
-    if not audit_avviato:
-        st.markdown(f"""
-            <div style='background:white; border:1px dashed {C_MEDIUM};
-                        border-radius:16px; padding:40px 24px;
-                        text-align:center; margin-top:15px;'>
-                <div style='font-size:32px; margin-bottom:12px;'>🛡️</div>
-                <p style='color:{C_MEDIUM}; font-size:14px; margin:0;
-                          text-transform:uppercase; letter-spacing:1px;'>
-                    Completa almeno una sezione<br>per visualizzare la scorecard
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        # Livello di rischio sistemico
-        if punteggio_finale >= soglia:
-            bg_alert, color_alert = "#f8d7da", "#721c24"
-            alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
-        elif punteggio_finale >= (soglia / 2):
-            bg_alert, color_alert = "#fff3cd", "#856404"
-            alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
+        if not audit_avviato:
+            st.markdown(f"""
+                <div style='background:white; border:1px dashed {C_MEDIUM};
+                            border-radius:16px; padding:40px 24px;
+                            text-align:center; margin-top:15px;'>
+                    <div style='font-size:32px; margin-bottom:12px;'>🛡️</div>
+                    <p style='color:{C_MEDIUM}; font-size:14px; margin:0;
+                              text-transform:uppercase; letter-spacing:1px;'>
+                        Completa almeno una sezione<br>per visualizzare la scorecard
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            bg_alert, color_alert = "#d4edda", "#155724"
-            alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
+            # Livello di rischio sistemico
+            if punteggio_finale >= soglia:
+                bg_alert, color_alert = "#f8d7da", "#721c24"
+                alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
+            elif punteggio_finale >= (soglia / 2):
+                bg_alert, color_alert = "#fff3cd", "#856404"
+                alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
+            else:
+                bg_alert, color_alert = "#d4edda", "#155724"
+                alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
 
-        # Blocco intersezionale — visibile solo se moltiplicatore attivo
-        warn_html = ""
-        if moltiplicatore > 1.0:
-            dim_labels = ", ".join(
-                d.replace("_", " ").title() for d in sorted(dimensioni_attive)
+            # Stato testi e immagini
+            testo_status = (
+                "🔴 RISCHIO RILEVATO"
+                if st.session_state.get("punti_testo", 0) > 0
+                else "🟢 Nessun rischio"
             )
-            liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
-            warn_html = f"""
-            <div style='background:#fdf0f5; border:1px solid {C_PRIMARY};
-                        border-radius:8px; padding:12px; margin-top:12px;'>
-                <p style='color:{C_PRIMARY}; font-weight:700; margin:0 0 6px 0;'>
-                    ⚠️ EFFETTO INTERSEZIONALE ATTIVO (×{moltiplicatore:.1f})
-                </p>
-                <p style='color:{C_DARK}; font-size:13px; margin:0; line-height:1.6;'>
-                    <strong>Dimensioni:</strong> {dim_labels or '—'}<br>
-                    <strong>Livelli implicati:</strong> {liv_labels or '—'}<br>
-                    <strong>Matrice:</strong> {n_dim} dim. × {n_livelli} liv.
-                </p>
-            </div>"""
+            img_labels = st.session_state.get("img_labels", ("BASSO", "BASSO", "BASSO"))
+            if "ALTO" in img_labels:
+                img_status = "🔴 RISCHIO ALTO"
+            elif "MEDIO" in img_labels:
+                img_status = "🟡 RISCHIO MEDIO"
+            else:
+                img_status = "🟢 Rischio basso"
+
+            # ── PARTE 1: card principale ──
+            st.markdown(f"""
+                <div class="result-card">
+                    <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
+                    <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">
+                        RISCHI SISTEMICI (LIV. 1–5)
+                    </p>
+                    <div style="background-color:{bg_alert}; color:{color_alert};
+                                padding:15px; border-radius:10px; font-weight:bold;
+                                font-size:16px;">
+                        {alert_text}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # ── PARTE 2: blocco intersezionale — render separato, solo se attivo ──
+            if moltiplicatore > 1.0:
+                dim_labels = ", ".join(
+                    d.replace("_", " ").title() for d in sorted(dimensioni_attive)
+                )
+                liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
+                st.markdown(f"""
+                    <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
+                                border-radius:8px; padding:12px; margin-top:8px;">
+                        <p style="color:{C_PRIMARY}; font-weight:700; margin:0 0 6px 0;">
+                            ⚠️ EFFETTO INTERSEZIONALE ATTIVO (×{moltiplicatore:.1f})
+                        </p>
+                        <p style="color:{C_DARK}; font-size:13px; margin:0; line-height:1.6;">
+                            <strong>Dimensioni:</strong> {dim_labels or '—'}<br>
+                            <strong>Livelli implicati:</strong> {liv_labels or '—'}<br>
+                            <strong>Matrice:</strong> {n_dim} dim. × {n_livelli} liv.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            # ── PARTE 3: stato output ──
+            st.markdown(f"""
+                <div style="background:white; border-radius:0 0 20px 20px;
+                            padding:20px 35px 25px 35px;
+                            box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+                    <hr style="border-top:1px solid {C_MEDIUM}; margin:0 0 15px 0;">
+                    <p style="font-weight:bold; color:{C_DARK}; text-transform:uppercase;
+                              letter-spacing:1px; margin-bottom:8px;">STATO DEGLI OUTPUT</p>
+                    <p style="margin:8px 0; color:{C_DARK};">
+                        <strong>TESTI:</strong> {testo_status}
+                    </p>
+                    <p style="margin:8px 0; color:{C_DARK};">
+                        <strong>IMMAGINI:</strong> {img_status}
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+
+            st.write("")
 
         # Stato testi e immagini
         testo_status = (
