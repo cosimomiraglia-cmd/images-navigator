@@ -84,8 +84,6 @@ st.markdown(f"""
 
 # ═══════════════════════════════════════════════════════════
 # DOMINI APPLICATIVI
-# Moltiplicatori ricalibrati: tetto minimo ×1.6 per coerenza
-# con la matrice intersezionale (la cella max fissa è ×1.6)
 # ═══════════════════════════════════════════════════════════
 DOMINI = {
     "GIUSTIZIA E SICUREZZA":    {"mult": 2.2, "threshold": 6.0},
@@ -94,16 +92,12 @@ DOMINI = {
     "FINANZA E CREDITO":        {"mult": 1.8, "threshold": 7.5},
     "ISTRUZIONE E RICERCA":     {"mult": 1.7, "threshold": 8.0},
     "RECRUITING E HR":          {"mult": 1.7, "threshold": 8.0},
-    "MARKETING E MEDIA":        {"mult": 1.6, "threshold": 10.0},  # era 1.3
-    "GAMING E ENTERTAINMENT":   {"mult": 1.6, "threshold": 12.0},  # era 1.1
+    "MARKETING E MEDIA":        {"mult": 1.6, "threshold": 10.0},
+    "GAMING E ENTERTAINMENT":   {"mult": 1.6, "threshold": 12.0},
 }
 
 # ═══════════════════════════════════════════════════════════
 # MATRICE INTERSEZIONALE — Proposta B (profondità dominante)
-#
-# Asse 1 (righe):  n. dimensioni protette attive
-# Asse 2 (colonne): n. livelli pipeline implicati
-# None → usa il moltiplicatore di dominio come tetto
 # ═══════════════════════════════════════════════════════════
 MATRICE_INTERSEZIONALE = {
     (1, 1): 1.0,  (1, 2): 1.3,  (1, 3): 1.6,
@@ -117,12 +111,6 @@ TUTTE_DIMENSIONI = [
 ]
 
 def get_intersectional_multiplier(n_dim, n_livelli, dominio):
-    """
-    Calcola il moltiplicatore intersezionale dalla matrice.
-    n_dim     : n. dimensioni protette attive (dichiarate + rilevate)
-    n_livelli : n. livelli pipeline con almeno un item critico spuntato
-    dominio   : chiave del dizionario DOMINI
-    """
     if n_dim == 0 or n_livelli == 0:
         return 1.0
     dim_key = min(n_dim, 3)
@@ -134,10 +122,6 @@ def get_intersectional_multiplier(n_dim, n_livelli, dominio):
 
 # ═══════════════════════════════════════════════════════════
 # STRUTTURA DATI DEGLI ITEM DI AUDIT
-#
-# Ogni item: key, label, weight (None = dinamico), dimensions, level, tag
-# Separare la struttura dati dal rendering permette di calcolare
-# il punteggio indipendentemente dal tab attivo.
 # ═══════════════════════════════════════════════════════════
 AUDIT_ITEMS = {
     "PREP": [
@@ -196,7 +180,6 @@ AUDIT_ITEMS = {
     ],
 }
 
-# Pesi dinamici per item con weight=None (dipendono dal dominio)
 def get_pesi_dinamici(dominio, w_dati, w_team, w_mod, w_ut):
     return {
         "dat_1": w_dati, "dat_2": w_dati, "dat_3": w_dati, "dat_4": w_dati,
@@ -264,9 +247,6 @@ for k, v in _defaults.items():
 
 # ═══════════════════════════════════════════════════════════
 # RENDERING ITEM AUDIT
-# Rendering puro: salva stato, non calcola nulla.
-# Il campo note è sempre presente (disabilitato se non spuntato)
-# per preservare il valore in session_state.
 # ═══════════════════════════════════════════════════════════
 def render_audit_item(item, weight_override=None):
     col_check, col_note = st.columns([1.5, 1])
@@ -284,8 +264,6 @@ def render_audit_item(item, weight_override=None):
 
 # ═══════════════════════════════════════════════════════════
 # CALCOLO PUNTEGGIO
-# Separato dal rendering: legge session_state direttamente,
-# funziona indipendentemente dal tab attivo.
 # ═══════════════════════════════════════════════════════════
 def calcola_punteggio(pesi_dinamici):
     punteggio = 0.0
@@ -321,12 +299,12 @@ def calcola_progresso():
                 sezioni_visitate += 1
                 break
 
-    testi_visitati   = any(f"t_g{i}" in st.session_state for i in range(1, 8))
+    testi_visitati    = any(f"t_g{i}" in st.session_state for i in range(1, 8))
     immagini_visitate = any(
         f"img_f_{label}" in st.session_state for label in SCORE_IMG_GENDER
     )
     sezioni_visitate += int(testi_visitati) + int(immagini_visitate)
-    totale = len(AUDIT_ITEMS) + 2  # +2 per Testi e Immagini
+    totale = len(AUDIT_ITEMS) + 2
     pct = int((sezioni_visitate / totale) * 100)
     return sezioni_visitate, totale, pct
 
@@ -368,8 +346,8 @@ def restore_session(payload):
         st.session_state["_session_restored"] = True
         st.session_state["_session_timestamp"] = payload.get("timestamp", "—")
         info = payload.get("info", {})
-        st.session_state["_restored_dominio"]     = info.get("dominio", "")
-        st.session_state["_restored_dimensioni"]  = info.get("dimensioni_dichiarate", [])
+        st.session_state["_restored_dominio"]    = info.get("dominio", "")
+        st.session_state["_restored_dimensioni"] = info.get("dimensioni_dichiarate", [])
         return True, ""
     except Exception as e:
         return False, str(e)
@@ -381,7 +359,6 @@ with st.sidebar:
     st.markdown(f"<h2 style='color:{C_PRIMARY};'>IMPOSTAZIONI</h2>",
                 unsafe_allow_html=True)
 
-    # Dominio — ripristina da sessione se disponibile
     dominio_index = 0
     if st.session_state["_restored_dominio"] in DOMINI:
         dominio_index = list(DOMINI.keys()).index(st.session_state["_restored_dominio"])
@@ -403,7 +380,6 @@ with st.sidebar:
     )
 
     st.divider()
-    # Progresso
     n_vis, n_tot, pct = calcola_progresso()
     st.markdown("**AVANZAMENTO AUDIT**")
     st.progress(pct / 100)
@@ -419,7 +395,6 @@ with st.sidebar:
     )
 
     st.divider()
-    # Sessione
     st.markdown("**SESSIONE DI AUDIT**")
     if st.session_state["_session_restored"]:
         ts = st.session_state["_session_timestamp"]
@@ -498,7 +473,6 @@ col_input, col_risultati = st.columns([0.65, 0.35], gap="large")
 
 # ═══════════════════════════════════════════════════════════
 # COLONNA INPUT — TAB DI AUDIT
-# Rendering puro: nessun calcolo avviene qui.
 # ═══════════════════════════════════════════════════════════
 with col_input:
     tabs = st.tabs([
@@ -507,43 +481,36 @@ with col_input:
         "TESTI", "IMMAGINI"
     ])
 
-    # TAB 0 — PREPARAZIONE
     with tabs[0]:
         st.subheader("FASE DI PREPARAZIONE")
         for item in AUDIT_ITEMS["PREP"]:
             render_audit_item(item)
 
-    # TAB 1 — DATI
     with tabs[1]:
         st.subheader("DATI")
         for item in AUDIT_ITEMS["DATI"]:
             render_audit_item(item, weight_override=w_dati)
 
-    # TAB 2 — TEAM
     with tabs[2]:
         st.subheader("TEAM")
         for item in AUDIT_ITEMS["TEAM"]:
             render_audit_item(item, weight_override=w_team)
 
-    # TAB 3 — MODELLO
     with tabs[3]:
         st.subheader("MODELLO")
         for item in AUDIT_ITEMS["MODELLO"]:
             render_audit_item(item, weight_override=w_mod)
 
-    # TAB 4 — UTENTI
     with tabs[4]:
         st.subheader("UTENTI")
         for item in AUDIT_ITEMS["UTENTI"]:
             render_audit_item(item, weight_override=w_ut)
 
-    # TAB 5 — CONTESTO
     with tabs[5]:
         st.subheader("CONTESTO")
         for item in AUDIT_ITEMS["CONTESTO"]:
             render_audit_item(item)
 
-    # TAB 6 — TESTI
     with tabs[6]:
         st.subheader("ANALISI DEI TESTI")
         st.caption("La presenza di anche un solo elemento determina un rischio bias.")
@@ -566,17 +533,14 @@ with col_input:
             t10 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",                          key="t_e3")
             t11 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",                            key="t_e4")
 
-        # Calcolo rischio testi (binario: presenza/assenza)
         st.session_state.punti_testo = (
             1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
         )
 
-    # TAB 7 — IMMAGINI
     with tabs[7]:
         st.subheader("ANALISI DELLE IMMAGINI")
         st.caption("Calcolo dell'indice di rischio additivo basato su sistema a più variabili.")
 
-        # Personaggio femminile singolo — max 6.0
         with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
             score_f = 0.0
             for label, peso in SCORE_IMG_GENDER.items():
@@ -587,7 +551,6 @@ with col_input:
             else:             label_f = "BASSO"
             st.markdown(f"**INDICE RISCHIO (F): {score_f} / 6.0 ({label_f})**")
 
-        # Interazione M/F — max 12.0
         with st.expander("INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)"):
             score_mf = 0.0
             for label, peso in SCORE_IMG_INTERACT.items():
@@ -604,27 +567,24 @@ with col_input:
             else:              label_mf = "BASSO"
             st.markdown(f"**INDICE RISCHIO (M/F): {score_mf} / 12.0 ({label_mf})**")
 
-        # Stereotipi etnici — max 4.0 (bug fix: era /3.0)
         with st.expander("STEREOTIPI ETNICI NEI GRUPPI"):
             score_e = 0.0
             for label, peso in SCORE_IMG_ETHNIC.items():
                 if st.checkbox(label, key=f"img_e_{label}"):
                     score_e += peso
-            if score_e >= 3:   label_e = "ALTO"    # bug fix: era == 2
-            elif score_e >= 2: label_e = "MEDIO"   # bug fix: era == 2 (non >= 2)
+            if score_e >= 3:   label_e = "ALTO"
+            elif score_e >= 2: label_e = "MEDIO"
             else:              label_e = "BASSO"
-            st.markdown(f"**INDICE RISCHIO ETNICO: {score_e} / 4.0 ({label_e})**")  # bug fix: era /3.0
+            st.markdown(f"**INDICE RISCHIO ETNICO: {score_e} / 4.0 ({label_e})**")
 
         st.session_state.max_score_img = max(score_f, score_mf, score_e)
         st.session_state.img_labels    = (label_f, label_mf, label_e)
 
 # ═══════════════════════════════════════════════════════════
-# CALCOLO PUNTEGGIO — avviene sempre, indipendentemente
-# dal tab attivo, leggendo session_state direttamente.
+# CALCOLO PUNTEGGIO
 # ═══════════════════════════════════════════════════════════
 punteggio_base, dim_rilevate, liv_rilevati, dettagli_audit = calcola_punteggio(pesi_dinamici)
 
-# Pool dimensioni: dichiarate in sidebar + rilevate durante audit
 dimensioni_attive = set(dimensioni_dichiarate) | dim_rilevate
 n_dim     = len(dimensioni_attive)
 n_livelli = len(liv_rilevati)
@@ -638,107 +598,39 @@ soglia           = DOMINI[dominio_scelto]["threshold"]
 # ═══════════════════════════════════════════════════════════
 with col_risultati:
 
-    # Scorecard condizionale: visibile solo se almeno un item è stato compilato
-        n_item_compilati = sum(
-            1 for items in AUDIT_ITEMS.values()
-            for item in items
-            if st.session_state.get(item["key"], False)
-        )
-        audit_avviato = n_item_compilati > 0 or st.session_state.get("punti_testo", 0) > 0
+    n_item_compilati = sum(
+        1 for items in AUDIT_ITEMS.values()
+        for item in items
+        if st.session_state.get(item["key"], False)
+    )
+    audit_avviato = n_item_compilati > 0 or st.session_state.get("punti_testo", 0) > 0
 
-        if not audit_avviato:
-            st.markdown(f"""
-                <div style='background:white; border:1px dashed {C_MEDIUM};
-                            border-radius:16px; padding:40px 24px;
-                            text-align:center; margin-top:15px;'>
-                    <div style='font-size:32px; margin-bottom:12px;'>🛡️</div>
-                    <p style='color:{C_MEDIUM}; font-size:14px; margin:0;
-                              text-transform:uppercase; letter-spacing:1px;'>
-                        Completa almeno una sezione<br>per visualizzare la scorecard
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
+    if not audit_avviato:
+        st.markdown(f"""
+            <div style='background:white; border:1px dashed {C_MEDIUM};
+                        border-radius:16px; padding:40px 24px;
+                        text-align:center; margin-top:15px;'>
+                <div style='font-size:32px; margin-bottom:12px;'>🛡️</div>
+                <p style='color:{C_MEDIUM}; font-size:14px; margin:0;
+                          text-transform:uppercase; letter-spacing:1px;'>
+                    Completa almeno una sezione<br>per visualizzare la scorecard
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        # ── Livello di rischio sistemico ──
+        if punteggio_finale >= soglia:
+            bg_alert, color_alert = "#f8d7da", "#721c24"
+            alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
+        elif punteggio_finale >= (soglia / 2):
+            bg_alert, color_alert = "#fff3cd", "#856404"
+            alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
         else:
-            # Livello di rischio sistemico
-            if punteggio_finale >= soglia:
-                bg_alert, color_alert = "#f8d7da", "#721c24"
-                alert_text = f"🔴 RISCHIO ALTO: {punteggio_finale:.1f} / {soglia}"
-            elif punteggio_finale >= (soglia / 2):
-                bg_alert, color_alert = "#fff3cd", "#856404"
-                alert_text = f"🟡 RISCHIO MEDIO: {punteggio_finale:.1f} / {soglia}"
-            else:
-                bg_alert, color_alert = "#d4edda", "#155724"
-                alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
+            bg_alert, color_alert = "#d4edda", "#155724"
+            alert_text = f"🟢 RISCHIO BASSO: {punteggio_finale:.1f} / {soglia}"
 
-            # Stato testi e immagini
-            testo_status = (
-                "🔴 RISCHIO RILEVATO"
-                if st.session_state.get("punti_testo", 0) > 0
-                else "🟢 Nessun rischio"
-            )
-            img_labels = st.session_state.get("img_labels", ("BASSO", "BASSO", "BASSO"))
-            if "ALTO" in img_labels:
-                img_status = "🔴 RISCHIO ALTO"
-            elif "MEDIO" in img_labels:
-                img_status = "🟡 RISCHIO MEDIO"
-            else:
-                img_status = "🟢 Rischio basso"
-
-            # ── PARTE 1: card principale ──
-            st.markdown(f"""
-                <div class="result-card">
-                    <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
-                    <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">
-                        RISCHI SISTEMICI (LIV. 1–5)
-                    </p>
-                    <div style="background-color:{bg_alert}; color:{color_alert};
-                                padding:15px; border-radius:10px; font-weight:bold;
-                                font-size:16px;">
-                        {alert_text}
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-            # ── PARTE 2: blocco intersezionale — render separato, solo se attivo ──
-            if moltiplicatore > 1.0:
-                dim_labels = ", ".join(
-                    d.replace("_", " ").title() for d in sorted(dimensioni_attive)
-                )
-                liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
-                st.markdown(f"""
-                    <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
-                                border-radius:8px; padding:12px; margin-top:8px;">
-                        <p style="color:{C_PRIMARY}; font-weight:700; margin:0 0 6px 0;">
-                            ⚠️ EFFETTO INTERSEZIONALE ATTIVO (×{moltiplicatore:.1f})
-                        </p>
-                        <p style="color:{C_DARK}; font-size:13px; margin:0; line-height:1.6;">
-                            <strong>Dimensioni:</strong> {dim_labels or '—'}<br>
-                            <strong>Livelli implicati:</strong> {liv_labels or '—'}<br>
-                            <strong>Matrice:</strong> {n_dim} dim. × {n_livelli} liv.
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-
-            # ── PARTE 3: stato output ──
-            st.markdown(f"""
-                <div style="background:white; border-radius:0 0 20px 20px;
-                            padding:20px 35px 25px 35px;
-                            box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-                    <hr style="border-top:1px solid {C_MEDIUM}; margin:0 0 15px 0;">
-                    <p style="font-weight:bold; color:{C_DARK}; text-transform:uppercase;
-                              letter-spacing:1px; margin-bottom:8px;">STATO DEGLI OUTPUT</p>
-                    <p style="margin:8px 0; color:{C_DARK};">
-                        <strong>TESTI:</strong> {testo_status}
-                    </p>
-                    <p style="margin:8px 0; color:{C_DARK};">
-                        <strong>IMMAGINI:</strong> {img_status}
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
-
-            st.write("")
-
-        # Stato testi e immagini
+        # ── Stato testi e immagini ──
         testo_status = (
             "🔴 RISCHIO RILEVATO"
             if st.session_state.get("punti_testo", 0) > 0
@@ -752,32 +644,61 @@ with col_risultati:
         else:
             img_status = "🟢 Rischio basso"
 
-        html_scorecard = f"""
-        <div class="result-card">
-            <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
-            <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">
-                RISCHI SISTEMICI (LIV. 1–5)
-            </p>
-            <div style="background-color:{bg_alert}; color:{color_alert};
-                        padding:15px; border-radius:10px; font-weight:bold;
-                        font-size:16px; margin-bottom:10px;">
-                {alert_text}
+        # ── PARTE 1: card principale ──
+        st.markdown(f"""
+            <div class="result-card">
+                <h3 style="margin-top:0; color:{C_DARK};">SCORECARD DI RISCHIO</h3>
+                <p style="font-weight:bold; color:{C_DARK}; margin-bottom:10px;">
+                    RISCHI SISTEMICI (LIV. 1–5)
+                </p>
+                <div style="background-color:{bg_alert}; color:{color_alert};
+                            padding:15px; border-radius:10px; font-weight:bold;
+                            font-size:16px;">
+                    {alert_text}
+                </div>
             </div>
-            {warn_html}
-            <hr style="border-top:1px solid {C_MEDIUM}; margin: 25px 0;">
-            <p style="font-weight:bold; color:{C_DARK};">STATO DEGLI OUTPUT</p>
-            <p style="margin:8px 0; color:{C_DARK};">
-                <strong>TESTI:</strong> {testo_status}
-            </p>
-            <p style="margin:8px 0; color:{C_DARK};">
-                <strong>IMMAGINI:</strong> {img_status}
-            </p>
-        </div>"""
+        """, unsafe_allow_html=True)
 
-        st.markdown(html_scorecard, unsafe_allow_html=True)
+        # ── PARTE 2: blocco intersezionale — solo se attivo ──
+        if moltiplicatore > 1.0:
+            dim_labels = ", ".join(
+                d.replace("_", " ").title() for d in sorted(dimensioni_attive)
+            )
+            liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
+            st.markdown(f"""
+                <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
+                            border-radius:8px; padding:12px; margin-top:8px;">
+                    <p style="color:{C_PRIMARY}; font-weight:700; margin:0 0 6px 0;">
+                        ⚠️ EFFETTO INTERSEZIONALE ATTIVO (×{moltiplicatore:.1f})
+                    </p>
+                    <p style="color:{C_DARK}; font-size:13px; margin:0; line-height:1.6;">
+                        <strong>Dimensioni:</strong> {dim_labels or '—'}<br>
+                        <strong>Livelli implicati:</strong> {liv_labels or '—'}<br>
+                        <strong>Matrice:</strong> {n_dim} dim. × {n_livelli} liv.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+
+        # ── PARTE 3: stato output ──
+        st.markdown(f"""
+            <div style="background:white; border-radius:0 0 20px 20px;
+                        padding:20px 35px 25px 35px;
+                        box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+                <hr style="border-top:1px solid {C_MEDIUM}; margin:0 0 15px 0;">
+                <p style="font-weight:bold; color:{C_DARK}; text-transform:uppercase;
+                          letter-spacing:1px; margin-bottom:8px;">STATO DEGLI OUTPUT</p>
+                <p style="margin:8px 0; color:{C_DARK};">
+                    <strong>TESTI:</strong> {testo_status}
+                </p>
+                <p style="margin:8px 0; color:{C_DARK};">
+                    <strong>IMMAGINI:</strong> {img_status}
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
         st.write("")
 
-        # Report testuale scaricabile
+        # ── Report testuale scaricabile ──
         report_data  = f"AUDIT IMAGES NAVIGATOR — {dominio_scelto}\n"
         report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
         report_data += "-" * 50 + "\n"
