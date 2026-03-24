@@ -90,14 +90,14 @@ st.markdown(f"""
 
 # --- DIZIONARIO DEI DOMINI APPLICATIVI ---
 DOMINI = {
-    "GIUSTIZIA E SICUREZZA": {"mult": 2.0, "threshold": 6.0},
-    "SANITA E WELFARE": {"mult": 1.9, "threshold": 6.0},
-    "PUBBLICA AMMINISTRAZIONE": {"mult": 1.9, "threshold": 7.0},
-    "FINANZA E CREDITO": {"mult": 1.8, "threshold": 7.5},
-    "ISTRUZIONE E RICERCA": {"mult": 1.7, "threshold": 8.0},
-    "RECRUITING E HR": {"mult": 1.6, "threshold": 8.0},
+    "GIUSTIZIA E SICUREZZA": {"mult": 2.2, "threshold": 6.0},
+    "SANITA E WELFARE": {"mult": 2.0, "threshold": 6.0},
+    "PUBBLICA AMMINISTRAZIONE": {"mult": 2.0, "threshold": 7.0},
+    "FINANZA E CREDITO": {"mult": 1.9, "threshold": 7.5},
+    "ISTRUZIONE E RICERCA": {"mult": 1.8, "threshold": 8.0},
+    "RECRUITING E HR": {"mult": 1.7, "threshold": 8.0},
     "MARKETING E MEDIA": {"mult": 1.3, "threshold": 10.0},
-    "GAMING E ENTERTAINMENT": {"mult": 1.0, "threshold": 12.0}
+    "GAMING E ENTERTAINMENT": {"mult": 1.1, "threshold": 12.0}
 }
 
 # --- PARAMETRI PER IL CALCOLO DELL'OUTPUT (LESSICO AGGIORNATO) ---
