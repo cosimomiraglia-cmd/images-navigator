@@ -328,14 +328,26 @@ _defaults = {
     "_last_upload_hash": None,
     "_restored_dominio": "",
     "_restored_dimensioni": [],
-    "_onboarding_done": False,   # False = mostra onboarding al primo accesso
+    "_onboarding_done": False,
     "_migrazione_v1": False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# Inizializza tutti gli item a "NV" se non già presenti
+# Pre-inizializzazione di tutti i key degli item audit a "NV".
+# Deve avvenire qui — prima di qualsiasi widget, sidebar inclusa —
+# perché Streamlit inizializza i radio button alla prima opzione ("SI")
+# se il key non è ancora presente in session_state al momento del render.
+# La sidebar esegue prima dei tab, quindi calcola_copertura() leggerebbe
+# valori "SI" se questa inizializzazione avvenisse più tardi.
+# La condizione `not in STATO_OPTIONS` gestisce anche valori anomali
+# da versioni precedenti del file di sessione.
+for _gruppo, _items in AUDIT_ITEMS.items():
+    for _item in _items:
+        if st.session_state.get(_item["key"]) not in STATO_OPTIONS:
+            st.session_state[_item["key"]] = "NV"
+
 # ═══════════════════════════════════════════════════════════
 # RENDERING ITEM AUDIT
 # Tre stati: SI / NO / NV
@@ -344,11 +356,8 @@ for k, v in _defaults.items():
 # quando il campo non è visibile.
 # ═══════════════════════════════════════════════════════════
 def render_audit_item(item, weight_override=None):
-    # Inizializzazione difensiva: imposta "NV" se la chiave è assente
-    # o contiene un valore non ammesso (es. residui da versioni precedenti).
-    # Applicata qui — al momento del render — evita la competizione con
-    # il meccanismo interno di Streamlit che può sovrascrivere i valori
-    # pre-inizializzati globalmente prima che i widget siano renderizzati.
+    # Guardia secondaria: gestisce casi residui in cui il key fosse
+    # arrivato con un valore non ammesso nonostante la pre-inizializzazione.
     if st.session_state.get(item["key"]) not in STATO_OPTIONS:
         st.session_state[item["key"]] = "NV"
 
