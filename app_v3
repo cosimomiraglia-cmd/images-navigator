@@ -140,11 +140,11 @@ TUTTE_DIMENSIONI = [
 # "NV"  → non ancora verificato / non applicabile → contributo = 0
 #          ma decrementa la copertura
 # ═══════════════════════════════════════════════════════════
-STATO_OPTIONS  = ["SI", "NO", "NV"]
+STATO_OPTIONS  = ["NV", "SI", "NO"]
 STATO_LABELS   = {
+    "NV": "—  Non verificato / N.A.",
     "SI": "✓  Sì, verificato",
     "NO": "✗  No, problema rilevato",
-    "NV": "—  Non verificato / N.A."
 }
 
 # ═══════════════════════════════════════════════════════════
