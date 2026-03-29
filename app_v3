@@ -571,7 +571,9 @@ with st.sidebar:
     # Pulsante per riaprire la guida introduttiva in qualsiasi momento
     if st.button("❓ Guida introduttiva", use_container_width=True):
         st.session_state["_onboarding_done"] = False
-        st.rerun()
+        # Il click sul pulsante causa già un rerun automatico.
+        # st.rerun() esplicito dentro with st.sidebar può essere
+        # instabile in alcune versioni di Streamlit — non necessario.
 
     st.divider()
     st.markdown("**NOTA METODOLOGICA**")
