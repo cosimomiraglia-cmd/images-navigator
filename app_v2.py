@@ -821,7 +821,7 @@ pesi_dinamici = get_pesi_dinamici(dominio_scelto, w_dati, w_team, w_mod, w_ut)
 # ═══════════════════════════════════════════════════════════
 # LAYOUT PRINCIPALE
 # ═══════════════════════════════════════════════════════════
-st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES NAVIGATOR</h1>",
+st.markdown(f"<h1 style='color:{C_PRIMARY};'>IMAGES NAVIGATOR</h1>",
             unsafe_allow_html=True)
 st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
 st.write("")
@@ -840,7 +840,7 @@ with col_input:
 
     with tabs[0]:
         st.subheader("FASE DI PREPARAZIONE")
-        st.caption("Rispondi Sì se l'aspetto è stato verificato e gestito, No se è stato verificato e risulta problematico, N/V se non è ancora stato esaminato.")
+        st.caption("Rispondi Sì se l'aspetto è stato verificato e gestito, No se è stato verificato e risulta problematico, N.A. se non è ancora stato esaminato o non è applicabile.")
         for item in AUDIT_ITEMS["PREP"]:
             render_audit_item(item)
 
