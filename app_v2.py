@@ -142,9 +142,9 @@ TUTTE_DIMENSIONI = [
 # ═══════════════════════════════════════════════════════════
 STATO_OPTIONS  = ["NV", "SI", "NO"]
 STATO_LABELS   = {
-    "NV": "—  Non verificato / N.A.",
-    "SI": "✓  Sì, verificato",
-    "NO": "✗  No, problema rilevato",
+    "NV": "N.A.",
+    "SI": "Sì",
+    "NO": "No",
 }
 
 # ═══════════════════════════════════════════════════════════
@@ -199,77 +199,102 @@ def esito_punteggio(punteggio_finale, soglia):
 AUDIT_ITEMS = {
     "PREP": [
         {"key": "prep_1",
-         "label": "Il caso d'uso e il target del sistema sono stati chiaramente definiti?",
+         "label": "Il caso d'uso del sistema è stato chiaramente definito e documentato?",
+         "help": None,
          "weight": 1.0, "dimensions": [], "level": "", "tag": "PREP"},
         {"key": "prep_2",
-         "label": "Sono stati selezionati gli indicatori di equità rilevanti per il dominio?",
+         "label": "Il target di utenti e le popolazioni impattate dal sistema sono stati identificati?",
+         "help": None,
          "weight": 1.0, "dimensions": [], "level": "", "tag": "PREP"},
         {"key": "prep_3",
-         "label": "Stakeholder e gruppi vulnerabili sono stati coinvolti nella fase di progettazione?",
+         "label": "Per ciascun gruppo identificato, sono state valutate le possibili forme di discriminazione a cui potrebbe essere esposto (es. di genere, etnica, per età, per disabilità)?",
+         "help": None,
+         "weight": 1.0, "dimensions": ["genere", "etnia", "età", "disabilità"], "level": "", "tag": "PREP"},
+        {"key": "prep_4",
+         "label": "Gruppi marginalizzati o potenzialmente impattati sono stati coinvolti nella fase di progettazione?",
+         "help": None,
          "weight": 1.0, "dimensions": ["genere", "etnia"], "level": "", "tag": "PREP"},
     ],
     "DATI": [
         {"key": "dat_1",
-         "label": "I dati di training riflettono la distribuzione demografica del target di riferimento?",
+         "label": "I dati di training includono esempi rappresentativi di tutti i gruppi demografici rilevanti per il caso d'uso?",
+         "help": "Es. un sistema di riconoscimento facciale addestrato su immagini che includono persone di diverse età, etnie e generi in proporzioni simili a quelle della popolazione che utilizzerà il sistema.",
          "weight": None, "dimensions": ["genere", "etnia", "età"], "level": "dati", "tag": "DATI"},
         {"key": "dat_2",
-         "label": "Le etichette del dataset sono state verificate per escludere stereotipi storici o discriminatori?",
+         "label": "Le etichette del dataset sono state verificate per escludere associazioni stereotipate o discriminatorie?",
+         "help": "Le etichette sono le categorie o annotazioni usate per classificare i dati. Es. un dataset di immagini professionali in cui \"medico\" è associato quasi esclusivamente a figure maschili e \"infermiere\" a figure femminili.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "dati", "tag": "DATI"},
         {"key": "dat_3",
-         "label": "Sono state adottate strategie di riequilibrio per i gruppi sottorappresentati?",
+         "label": "Eventuali squilibri nella rappresentazione dei gruppi sono stati corretti con strategie specifiche?",
+         "help": "Se alcuni gruppi sono numericamente minoritari nel dataset, tecniche come oversampling o pesatura dei campioni possono correggere lo squilibrio. Rilevante soprattutto se l'item precedente ha evidenziato problemi di rappresentatività.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "dati", "tag": "DATI"},
         {"key": "dat_4",
-         "label": "Il dataset è documentato con un Data Sheet o documento equivalente che ne espliciti i rischi?",
+         "label": "Il dataset è documentato in modo da rendere tracciabili origine, limiti e rischi noti?",
+         "help": "Un Data Sheet descrive origine, composizione, limitazioni e rischi noti del dataset. Non deve necessariamente chiamarsi così: va bene qualsiasi documento che renda tracciabili queste informazioni per chi usa o audita il sistema.",
          "weight": None, "dimensions": [], "level": "dati", "tag": "DATI"},
     ],
     "TEAM": [
         {"key": "tea_1",
-         "label": "Il team include prospettive diverse per genere, etnia e background disciplinare?",
+         "label": "Il team include o ha consultato prospettive diverse per genere, etnia e background disciplinare?",
+         "help": "Es. un team che include oltre agli ingegneri anche figure con competenze in scienze sociali, diritto antidiscriminatorio o design dell'accessibilità.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "team", "tag": "TEAM"},
         {"key": "tea_2",
-         "label": "Le variabili proxy che potrebbero penalizzare gruppi protetti sono state identificate?",
+         "label": "Le variabili del sistema sono state verificate per escludere l'uso indiretto di caratteristiche sensibili come genere o etnia?",
+         "help": "Una variabile proxy è un dato apparentemente neutro che in realtà riflette indirettamente una caratteristica sensibile. Es. il codice postale come indicatore indiretto di etnia o classe sociale, il nome come indicatore di genere o origine culturale.",
          "weight": None, "dimensions": ["genere", "etnia", "età", "disabilità"], "level": "team", "tag": "TEAM"},
         {"key": "tea_3",
-         "label": "Il team include o consulta competenze in ambito DEI (Diversity, Equity, Inclusion)?",
+         "label": "Il team include o ha consultato competenze specifiche in ambito di equità, diversità e inclusione?",
+         "help": "Es. consulenza con associazioni che rappresentano gruppi marginalizzati, revisione esterna da parte di esperti di discriminazione algoritmica, o formazione specifica del team su questi temi.",
          "weight": None, "dimensions": [], "level": "team", "tag": "TEAM"},
         {"key": "tea_4",
-         "label": "Le scelte di design rilevanti sono registrate in un registro decisionale tracciabile?",
+         "label": "Le scelte progettuali rilevanti sono documentate con la relativa motivazione?",
+         "help": "Es. un documento che riporti perché sono state scelte certe variabili di input, quali alternative sono state scartate e con quale motivazione — utile sia per l'audit interno che per la rendicontazione esterna.",
          "weight": None, "dimensions": [], "level": "team", "tag": "TEAM"},
     ],
     "MODELLO": [
         {"key": "mod_1",
-         "label": "Le metriche di performance sono state calcolate separatamente per i gruppi demografici rilevanti?",
+         "label": "Le metriche di performance sono state calcolate separatamente per i gruppi demografici rilevanti, non solo in aggregato?",
+         "help": "Es. un sistema di selezione del credito che ha un'accuratezza complessiva del 90% ma produce errori sistematici per le donne o per determinate etnie — un problema invisibile guardando solo il dato aggregato.",
          "weight": None, "dimensions": ["genere", "etnia", "età"], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_2",
-         "label": "Il modello è stato testato con prompt o input avversariali relativi a genere ed etnia?",
+         "label": "Il sistema produce risultati coerenti quando gli input variano solo per caratteristiche demografiche?",
+         "help": "Es. due profili identici in tutto tranne che per il nome — uno tipicamente maschile, uno femminile — producono la stessa risposta dal sistema.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_3",
-         "label": "Il sistema dispone di una Model Card aggiornata che documenta limiti, rischi e gruppi a rischio?",
+         "label": "Il sistema è documentato con i suoi limiti, i casi d'uso per cui non è stato validato e i gruppi per cui le performance potrebbero essere ridotte?",
+         "help": "Es. \"questo sistema è stato sviluppato e testato su popolazione adulta italiana — l'uso su altri contesti geografici o demografici richiede una nuova validazione\".",
          "weight": None, "dimensions": [], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_4",
-         "label": "Sono stati implementati filtri o meccanismi per mitigare le disparità di performance rilevate?",
+         "label": "Quando sono state rilevate disparità di performance tra gruppi, sono state adottate misure correttive?",
+         "help": "Es. se il sistema mostrava tassi di approvazione diversi per uomini e donne con lo stesso profilo, sono stati introdotti aggiustamenti che hanno ridotto o eliminato il divario.",
          "weight": None, "dimensions": [], "level": "modello", "tag": "MODELLO"},
     ],
     "UTENTI": [
         {"key": "ute_1",
-         "label": "Il rischio di echo-chamber o polarizzazione è stato analizzato nel contesto del sistema?",
+         "label": "Il sistema è stato valutato rispetto al rischio di amplificare contenuti polarizzanti o di limitare la diversità delle informazioni a cui gli utenti sono esposti?",
+         "help": None,
          "weight": None, "dimensions": [], "level": "utenti", "tag": "UTENTI"},
         {"key": "ute_2",
-         "label": "Gli utenti dispongono di canali accessibili e visibili per segnalare output ritenuti ingiusti?",
+         "label": "Gli utenti hanno un modo semplice e diretto per segnalare quando il sistema produce un risultato che percepiscono come scorretto o discriminatorio?",
+         "help": None,
          "weight": None, "dimensions": [], "level": "utenti", "tag": "UTENTI"},
         {"key": "ute_3",
          "label": "L'interfaccia è stata progettata per essere accessibile a utenti con esigenze e abilità diverse?",
+         "help": None,
          "weight": None, "dimensions": ["disabilità", "età"], "level": "utenti", "tag": "UTENTI"},
     ],
     "CONTESTO": [
         {"key": "con_1",
          "label": "Il sistema è conforme alle normative vigenti in materia (es. AI Act, GDPR)?",
+         "help": None,
          "weight": 2.5, "dimensions": [], "level": "contesto", "tag": "CONTESTO"},
         {"key": "con_2",
-         "label": "Esistono meccanismi di governance partecipativa che includano rappresentanti delle comunità impattate?",
+         "label": "Le persone o i gruppi direttamente impattati dal sistema hanno avuto modo di contribuire alla sua progettazione o di esprimere feedback sul suo funzionamento?",
+         "help": None,
          "weight": 2.0, "dimensions": ["genere", "etnia"], "level": "contesto", "tag": "CONTESTO"},
         {"key": "con_3",
-         "label": "Sono condotte valutazioni d'impatto periodiche sui diritti fondamentali degli utenti?",
+         "label": "È stata condotta una valutazione degli effetti che il sistema potrebbe produrre sui diritti e le opportunità delle persone che ne sono influenzate?",
+         "help": None,
          "weight": 2.0, "dimensions": [], "level": "contesto", "tag": "CONTESTO"},
     ],
 }
@@ -373,9 +398,16 @@ def render_audit_item(item, weight_override=None):
             key=item["key"],
             horizontal=True,
         )
+        # Testo di aiuto sempre visibile, in corsivo grigio
+        if item.get("help"):
+            st.markdown(
+                f"<div style='font-size:12px; color:{C_MEDIUM}; "
+                f"font-style:italic; margin-top:2px; margin-bottom:4px; "
+                f"line-height:1.5;'>{item['help']}</div>",
+                unsafe_allow_html=True
+            )
 
     with col_note:
-        # La nota è sempre in session_state ma visibile solo se NO
         if stato_corrente == "NO":
             st.text_input(
                 "Evidenza o azione prevista",
@@ -597,6 +629,8 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════
 if not st.session_state["_onboarding_done"]:
 
+    # Logo progetto — sostituire il percorso con il PNG del logo reale
+    st.image("Logo_Images.png", width=180)
     st.markdown(f"""
         <div style="max-width:800px; margin:0 auto; padding-top:20px;">
         <div style="background:linear-gradient(140deg,#1B2D45 0%,#2A4060 100%);
@@ -679,24 +713,25 @@ if not st.session_state["_onboarding_done"]:
                                 margin-bottom:10px;">
                         <span style="background:#d4edda; color:#155724; padding:3px 12px;
                                      border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">✓ Sì</span>
+                                     flex-shrink:0; white-space:nowrap;">Sì</span>
                         <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            L'aspetto è stato verificato e non presenta problemi</span>
+                            Ho verificato questo aspetto e non ho rilevato problemi</span>
                     </div>
                     <div style="display:flex; align-items:flex-start; gap:10px;
                                 margin-bottom:10px;">
                         <span style="background:#f8d7da; color:#721c24; padding:3px 12px;
                                      border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">✗ No</span>
+                                     flex-shrink:0; white-space:nowrap;">No</span>
                         <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            L'aspetto è stato verificato e richiede attenzione</span>
+                            Ho verificato questo aspetto e ho rilevato una criticità</span>
                     </div>
                     <div style="display:flex; align-items:flex-start; gap:10px;">
                         <span style="background:#f3f4f6; color:#6b7280; padding:3px 12px;
                                      border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">— N/V</span>
+                                     flex-shrink:0; white-space:nowrap;">N.A.</span>
                         <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            Non ancora esaminato o non applicabile</span>
+                            Non ho ancora esaminato questo aspetto, oppure non è
+                            pertinente al mio sistema</span>
                     </div>
                 </div>
             </div>
@@ -722,9 +757,10 @@ if not st.session_state["_onboarding_done"]:
             </div>
         """, unsafe_allow_html=True)
 
+    # Nota d'uso generale
     st.markdown(f"""
         <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px;
-                    padding:16px 22px; margin:8px 0 24px;">
+                    padding:16px 22px; margin:8px 0 12px;">
             <span style="font-size:13px; color:#5d4037; line-height:1.65;">
                 <strong>Nota d'uso.</strong> Questo strumento è progettato per
                 supportare processi di miglioramento, non per emettere giudizi.
@@ -732,6 +768,35 @@ if not st.session_state["_onboarding_done"]:
                 fornite. Nessun punteggio costituisce una certificazione di conformità
                 né un obbligo legale. Lo strumento è parte di una ricerca accademica
                 in corso: i parametri saranno oggetto di validazione empirica progressiva.
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Disclaimer moduli Testi e Immagini
+    st.markdown(f"""
+        <div style="background:#f0f4ff; border:1px solid #c7d2fe; border-radius:10px;
+                    padding:16px 22px; margin:0 0 12px;">
+            <span style="font-size:13px; color:#3730a3; line-height:1.65;">
+                <strong>Testi e Immagini.</strong> I moduli Testi e Immagini non
+                analizzano automaticamente i contenuti: richiedono che tu abbia già
+                esaminato il materiale prodotto o utilizzato dal sistema e che tu
+                risponda sulla base della tua osservazione diretta.
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Disclaimer contestuale
+    st.markdown(f"""
+        <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px;
+                    padding:16px 22px; margin:0 0 24px;">
+            <span style="font-size:13px; color:#166534; line-height:1.65;">
+                <strong>Interpretazione contestuale.</strong> Alcuni indicatori —
+                in particolare nel modulo Immagini — possono essere funzionali al
+                dominio applicativo del sistema che stai valutando. La presenza di
+                nudità in un sistema di supporto diagnostico medico, ad esempio,
+                non è indicativa di oggettificazione. La responsabilità
+                dell'interpretazione contestuale di ciascun segnale rimane con
+                il valutatore.
             </span>
         </div>
     """, unsafe_allow_html=True)
@@ -821,19 +886,27 @@ with col_input:
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Stereotipi di genere**")
-            t1  = st.checkbox("Uso di 'uomo/uomini' come sinonimo universale di umanità",                    key="t_g1")
-            t2  = st.checkbox("Participio declinato al maschile in presenza di maggioranza femminile",        key="t_g2")
-            t3  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)",       key="t_g3")
-            t4  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",            key="t_g4")
-            t5  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",                     key="t_g5")
-            t6  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",                 key="t_g6")
-            t7  = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",              key="t_g7")
+            t1  = st.checkbox("Uso di 'uomo/uomini' come sinonimo universale di umanità",             key="t_g1")
+            t2  = st.checkbox("Participio declinato al maschile in presenza di maggioranza femminile", key="t_g2")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. \"Gli studenti iscritti al corso sono stati ammessi alla sessione\" scritto al maschile anche quando la maggioranza è femminile.</div>", unsafe_allow_html=True)
+            t3  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)", key="t_g3")
+            t4  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",      key="t_g4")
+            t5  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",               key="t_g5")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. aggettivi come \"delicata\", \"emotiva\", \"irrazionale\", \"isterica\" riferiti a donne; diminutivi come \"dottoressa\" usato in modo sminuente rispetto a \"dottore\".</div>", unsafe_allow_html=True)
+            t6  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",           key="t_g6")
+            t7  = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",        key="t_g7")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. termini come \"strega\", \"oca\"; espressioni che associano donne ad animali in chiave denigratoria; linguaggio che normalizza violenza o sottomissione.</div>", unsafe_allow_html=True)
+
         with c2:
             st.markdown("**Stereotipi etnici**")
-            t8  = st.checkbox("Uso di stereotipi comparativi (es. 'fumare come un turco')",                   key="t_e1")
-            t9  = st.checkbox("Antonomasia stereotipata basata sull'etnia",                                   key="t_e2")
-            t10 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",                          key="t_e3")
-            t11 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",                            key="t_e4")
+            t8  = st.checkbox("Uso di stereotipi comparativi basati sull'etnia",          key="t_e1")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. \"fumare come un turco\", \"essere preciso come uno svizzero\" — costrutti che attribuiscono qualità o difetti a un'intera etnia.</div>", unsafe_allow_html=True)
+            t9  = st.checkbox("Antonomasia stereotipata basata sull'etnia",                key="t_e2")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. usare il nome di un gruppo etnico come sinonimo di un comportamento o difetto, come se l'appartenenza al gruppo spiegasse o giustificasse la caratteristica attribuita.</div>", unsafe_allow_html=True)
+            t10 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",       key="t_e3")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. termini storicamente usati in senso dispregiativo verso specifici gruppi etnici, o affermazioni generalizzanti come \"tutti gli immigrati sono...\"</div>", unsafe_allow_html=True)
+            t11 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",         key="t_e4")
+            st.markdown("<div style='font-size:12px;color:#a5a5a5;font-style:italic;margin:-8px 0 8px 24px;line-height:1.4;'>Es. paragoni o metafore che associano gruppi etnici a caratteristiche animali negative come brutalità, sporcizia o mancanza di civiltà.</div>", unsafe_allow_html=True)
         st.session_state.punti_testo = (
             1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
         )
