@@ -6,12 +6,13 @@ from datetime import datetime
 # CONFIGURAZIONE DELLA PAGINA
 # ═══════════════════════════════════════════════════════════
 st.set_page_config(
-    from styles import apply_styles, C_PRIMARY, C_DARK, C_MEDIUM, C_BG
-    apply_styles()
     page_title="IMAGES NAVIGATOR",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+from styles import apply_styles, C_PRIMARY, C_DARK, C_MEDIUM, C_BG
+apply_styles()
 
 # ═══════════════════════════════════════════════════════════
 # DOMINI APPLICATIVI
