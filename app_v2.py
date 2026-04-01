@@ -6,105 +6,12 @@ from datetime import datetime
 # CONFIGURAZIONE DELLA PAGINA
 # ═══════════════════════════════════════════════════════════
 st.set_page_config(
+    from styles import apply_styles, C_PRIMARY, C_DARK, C_MEDIUM, C_BG
+    apply_styles()
     page_title="IMAGES NAVIGATOR",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# ═══════════════════════════════════════════════════════════
-# PALETTE UFFICIALE PROGETTO PRIN PNRR
-# ═══════════════════════════════════════════════════════════
-C_PRIMARY = "#e3286d"
-C_DARK    = "#565656"
-C_MEDIUM  = "#a5a5a5"
-C_BG      = "#e2ddd9"
-
-# ═══════════════════════════════════════════════════════════
-# CUSTOM CSS
-# ═══════════════════════════════════════════════════════════
-st.markdown(f"""
-    <style>
-    .stApp {{ background-color: {C_BG}; }}
-
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 15px;
-        background-color: transparent;
-        padding: 15px 0px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        height: 65px;
-        border-radius: 10px;
-        background-color: white;
-        border: 2px solid {C_MEDIUM};
-        padding: 0px 25px;
-        transition: all 0.4s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }}
-    .stTabs [data-baseweb="tab"] p {{
-        font-size: 15px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: {C_DARK};
-    }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {C_PRIMARY} !important;
-        border-color: {C_PRIMARY} !important;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(227, 40, 109, 0.25);
-    }}
-    .stTabs [aria-selected="true"] p {{ color: white !important; }}
-
-    .result-card {{
-        background-color: white;
-        padding: 28px;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-        margin-bottom: 10px;
-    }}
-    .measure-label {{
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: {C_MEDIUM};
-        margin-bottom: 6px;
-    }}
-    .measure-value {{
-        font-size: 15px;
-        font-weight: 700;
-        padding: 12px 14px;
-        border-radius: 8px;
-    }}
-    h1, h2, h3, h4, .stButton button, .stDownloadButton button {{
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: {C_DARK} !important;
-    }}
-    .stTextInput input {{
-        border-radius: 8px;
-        border: 1px solid {C_MEDIUM};
-        background-color: #ffffff;
-    }}
-    /* Stile per i radio button come gruppo di opzioni */
-    div[data-testid="stRadio"] > div[role="radiogroup"] {{
-        gap: 6px;
-    }}
-    div[data-testid="stRadio"] > div[role="radiogroup"] label {{
-        border: 1.5px solid {C_MEDIUM};
-        border-radius: 6px;
-        padding: 4px 12px;
-        background: white;
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 0.15s;
-    }}
-    .item-divider {{
-        border: none;
-        border-top: 1px solid #ede9e1;
-        margin: 10px 0;
-    }}
-    </style>
-""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════
 # DOMINI APPLICATIVI
