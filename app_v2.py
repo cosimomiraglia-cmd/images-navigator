@@ -630,7 +630,7 @@ with st.sidebar:
 if not st.session_state["_onboarding_done"]:
 
     # Logo progetto — sostituire il percorso con il PNG del logo reale
-    st.image("Logo_Images.png", width=100)
+    #st.image("Logo_Images.png", width=100)
     st.markdown(f"""
         <div style="max-width:800px; margin:0 auto; padding-top:20px;">
         <div style="background:linear-gradient(140deg,#1B2D45 0%,#2A4060 100%);
