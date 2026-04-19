@@ -546,8 +546,7 @@ if not st.session_state["_onboarding_done"]:
 
     # Logo progetto — sostituire il percorso con il PNG del logo reale
     # Es: st.image("assets/logo_images.png", width=180)
-    st.image("Logo_Images_icon.png", width=180)
-    st.markdown("""
+       st.markdown("""
         <div class="ob-container">
           <div class="ob-hero">
             <div class="ob-hero-tag">Progetto PRIN PNRR · IMAGES</div>
@@ -695,12 +694,8 @@ pesi_dinamici = get_pesi_dinamici(dominio_scelto, w_dati, w_team, w_mod, w_ut)
 # ═══════════════════════════════════════════════════════════
 # LAYOUT PRINCIPALE
 # ═══════════════════════════════════════════════════════════
-col_logo, col_title = st.columns([0.1, 0.9], gap="small")
-with col_logo:
-    st.image("Logo_Images_icon.png", width=60)
-with col_title:
-    st.markdown(f"<h1 style='color:{C_PRIMARY}; margin-top:10px;'>IMAGES NAVIGATOR</h1>",
-                unsafe_allow_html=True)
+st.markdown(f"<h1 style='color:{C_PRIMARY};'>IMAGES NAVIGATOR</h1>",
+            unsafe_allow_html=True)
 st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
 st.write("")
 
@@ -871,14 +866,11 @@ with col_risultati:
     audit_avviato = n_verificati > 0 or st.session_state.get("punti_testo", 0) > 0
 
     if not audit_avviato:
-        st.markdown("<div class='sc-placeholder'>", unsafe_allow_html=True)
-        col_sx, col_cx, col_dx = st.columns([1, 1, 1])
-        with col_cx:
-            st.image("Logo_Images_icon.png", width=60)
         st.markdown("""
-            <p class='sc-placeholder-text' style='margin-top:10px;'>
-                Inizia a rispondere alle domande<br>per visualizzare i risultati
-            </p>
+            <div class='sc-placeholder'>
+                <p class='sc-placeholder-text'>
+                    Inizia a rispondere alle domande<br>per visualizzare i risultati
+                </p>
             </div>
         """, unsafe_allow_html=True)
 
