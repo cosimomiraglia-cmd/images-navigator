@@ -336,6 +336,254 @@ def apply_styles():
         margin: 8px 0;
     }}
 
+    /* ── TESTO DI AIUTO SOTTO GLI ITEM ──────────────────────── */
+    .item-help {{
+        font-size: 12px;
+        color: {C_MEDIUM};
+        font-style: italic;
+        margin: 2px 0 4px;
+        line-height: 1.5;
+    }}
+    .item-help-checkbox {{
+        font-size: 12px;
+        color: {C_MEDIUM};
+        font-style: italic;
+        margin: -8px 0 8px 24px;
+        line-height: 1.4;
+    }}
+
+    /* ── ONBOARDING: CONTAINER ESTERNO ──────────────────────── */
+    .ob-container {{
+        max-width: 800px;
+        margin: 0 auto;
+        padding-top: 20px;
+    }}
+
+    /* ── ONBOARDING: HERO (banner con gradient) ─────────────── */
+    .ob-hero {{
+        background: linear-gradient(140deg, #1B2D45 0%, #2A4060 100%);
+        border-radius: 16px;
+        padding: 40px 44px 36px;
+        color: white;
+        margin-bottom: 28px;
+    }}
+    .ob-hero-tag {{
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }}
+    .ob-hero-title {{
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: white;
+        letter-spacing: -0.5px;
+    }}
+    .ob-hero-sub {{
+        font-size: 16px;
+        opacity: 0.85;
+        line-height: 1.6;
+        max-width: 580px;
+    }}
+
+    /* ── ONBOARDING: CARD ESPLICATIVE ───────────────────────── */
+    .ob-card {{
+        background: white;
+        border-radius: 12px;
+        padding: 24px 26px;
+        margin-bottom: 16px;
+        border-left: 5px solid {C_MEDIUM};
+    }}
+    .ob-card.primary {{
+        border-left-color: {C_PRIMARY};
+    }}
+    .ob-card-label {{
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: {C_MEDIUM};
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }}
+    .ob-card-body {{
+        color: {C_DARK};
+        font-size: 14px;
+        line-height: 1.65;
+        margin: 0;
+    }}
+
+    /* ── ONBOARDING: CHIP DELLE OPZIONI Sì/No/N.A. ──────────── */
+    .ob-chip-row {{
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+    }}
+    .ob-chip-row:last-child {{
+        margin-bottom: 0;
+    }}
+    .ob-chip {{
+        padding: 3px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }}
+    .ob-chip-yes {{ background: #d4edda; color: #155724; }}
+    .ob-chip-no  {{ background: #f8d7da; color: #721c24; }}
+    .ob-chip-na  {{ background: #f3f4f6; color: #6b7280; }}
+    .ob-chip-text {{
+        color: {C_DARK};
+        font-size: 13px;
+        line-height: 1.5;
+    }}
+    .ob-chips-wrapper {{
+        margin-top: 14px;
+    }}
+
+    /* ── ONBOARDING: DISCLAIMER ─────────────────────────────── */
+    .ob-disclaimer {{
+        border-radius: 10px;
+        padding: 16px 22px;
+        margin: 8px 0 12px;
+        font-size: 13px;
+        line-height: 1.65;
+    }}
+    .ob-disclaimer:last-of-type {{
+        margin-bottom: 24px;
+    }}
+    .ob-disclaimer.amber {{
+        background: #fff8e1;
+        border: 1px solid #ffe082;
+        color: #5d4037;
+    }}
+    .ob-disclaimer.blue {{
+        background: #f0f4ff;
+        border: 1px solid #c7d2fe;
+        color: #3730a3;
+    }}
+    .ob-disclaimer.green {{
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        color: #166534;
+    }}
+
+    /* ── SCORECARD: PLACEHOLDER (audit non avviato) ─────────── */
+    .sc-placeholder {{
+        background: white;
+        border: 1px dashed {C_MEDIUM};
+        border-radius: 16px;
+        padding: 40px 24px;
+        text-align: center;
+        margin-top: 15px;
+    }}
+    .sc-placeholder-icon {{
+        font-size: 32px;
+        margin-bottom: 12px;
+    }}
+    .sc-placeholder-text {{
+        color: {C_MEDIUM};
+        font-size: 14px;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+
+    /* ── SCORECARD: COPERTURA ───────────────────────────────── */
+    .sc-coverage {{
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+    }}
+    .sc-coverage.ok    {{ background: #d4edda; color: #155724; }}
+    .sc-coverage.warn  {{ background: #fff3cd; color: #856404; }}
+    .sc-coverage.info  {{ background: #f8f9fa; color: #6c757d; }}
+    .sc-coverage-label {{
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 4px;
+    }}
+    .sc-coverage-value {{
+        font-size: 20px;
+        font-weight: 700;
+    }}
+    .sc-coverage-msg {{
+        font-size: 12px;
+        margin-top: 4px;
+        line-height: 1.4;
+    }}
+
+    /* ── SCORECARD: BORDI CARD MISURE ───────────────────────── */
+    .result-card-primary {{
+        border-top: 6px solid {C_PRIMARY};
+    }}
+    .result-card-secondary {{
+        border-top: 6px solid {C_MEDIUM};
+    }}
+
+    /* ── SCORECARD: PANNELLO INTERSEZIONALE ─────────────────── */
+    .sc-intersect {{
+        background: #fdf0f5;
+        border: 1px solid {C_PRIMARY};
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-top: -6px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: {C_DARK};
+    }}
+    .sc-intersect-header {{
+        color: {C_PRIMARY};
+        font-weight: 700;
+    }}
+
+    /* ── SCORECARD: DETTAGLIO PER LIVELLO ───────────────────── */
+    .sc-level-row {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+    }}
+    .sc-level-name {{
+        color: {C_DARK};
+        font-weight: 600;
+    }}
+    .sc-level-count {{
+        font-weight: 400;
+        color: {C_MEDIUM};
+        font-size: 11px;
+    }}
+    .sc-level-badge {{
+        padding: 2px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+    }}
+
+    /* ── SCORECARD: STATO OUTPUT (Testi e Immagini) ─────────── */
+    .sc-output-row {{
+        margin: 6px 0;
+        color: {C_DARK};
+        font-size: 14px;
+    }}
+
+    /* ── SIDEBAR: PROGRESSO AUDIT ───────────────────────────── */
+    .sb-progress-label {{
+        font-size: 12px;
+        margin-top: 4px;
+    }}
+    .sb-progress-label.ok    {{ color: #28a745; }}
+    .sb-progress-label.warn  {{ color: #856404; }}
+    .sb-progress-label.info  {{ color: {C_MEDIUM}; }}
+
     /* ── FILE UPLOADER ──────────────────────────────────────── */
     [data-testid="stFileUploader"] {{
         background: rgba(255,255,255,0.06) !important;
