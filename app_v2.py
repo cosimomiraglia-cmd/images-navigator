@@ -543,10 +543,9 @@ with st.sidebar:
 # ONBOARDING — mostrato al primo accesso e su richiesta
 # ═══════════════════════════════════════════════════════════
 if not st.session_state["_onboarding_done"]:
-
     # Logo progetto — sostituire il percorso con il PNG del logo reale
     # Es: st.image("assets/logo_images.png", width=180)
-       st.markdown("""
+    st.markdown("""
         <div class="ob-container">
           <div class="ob-hero">
             <div class="ob-hero-tag">Progetto PRIN PNRR · IMAGES</div>
@@ -561,7 +560,6 @@ if not st.session_state["_onboarding_done"]:
     """, unsafe_allow_html=True)
 
     col_ob1, col_ob2 = st.columns(2, gap="medium")
-
     with col_ob1:
         st.markdown("""
             <div class="ob-card primary">
