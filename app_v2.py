@@ -259,6 +259,20 @@ ESCLUSIONI_MF = [
     "Sguardo distolto (non rivolto verso l'osservatore)",
 ]
 
+# Gruppi categoriali nel modulo Immagini.
+# Le linee guida IMAGES presentano alcune variabili come alternative reciprocamente
+# esclusive (es. "Outfits": nuda OR parzialmente svestita). Il codice mantiene
+# checkbox indipendenti per uniformità di interfaccia, ma aggrega col massimo
+# anziché con la somma per rispettare il vincolo categoriale.
+CATEGORIAL_GROUP_OUTFITS = [
+    "Nudità totale",
+    "Nudità parziale o abbigliamento esplicitamente succinto",
+]
+CATEGORIAL_GROUP_SETTING = [
+    "Contesto domestico: solo la donna si occupa dei figli o delle faccende",
+    "Contesto professionale: l'uomo occupa il ruolo gerarchico superiore",
+]
+
 # ═══════════════════════════════════════════════════════════
 # INIZIALIZZAZIONE SESSION STATE
 # ═══════════════════════════════════════════════════════════
@@ -385,7 +399,7 @@ def serialize_session(info):
             dati_audit[item["key"]] = st.session_state.get(item["key"], "NV")
             dati_audit[f"note_{item['key']}"] = st.session_state.get(f"note_{item['key']}", "")
 
-    for k in [f"t_g{i}" for i in range(1, 8)] + [f"t_e{i}" for i in range(1, 5)]:
+    for k in [f"t_g{i}" for i in range(1, 11)] + [f"t_e{i}" for i in range(1, 5)]:
         dati_audit[k] = st.session_state.get(k, False)
 
     for label in SCORE_IMG_GENDER:
@@ -744,26 +758,32 @@ with col_input:
             t1  = st.checkbox("Uso di 'uomo/uomini' come sinonimo universale di umanità",             key="t_g1")
             t2  = st.checkbox("Participio declinato al maschile in presenza di maggioranza femminile", key="t_g2")
             st.markdown("<div class='item-help-checkbox'>Es. \"Gli studenti iscritti al corso sono stati ammessi alla sessione\" scritto al maschile anche quando la maggioranza è femminile.</div>", unsafe_allow_html=True)
-            t3  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)", key="t_g3")
-            t4  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",      key="t_g4")
-            t5  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",               key="t_g5")
+            t3  = st.checkbox("Asimmetria nominativa: donne chiamate per nome di battesimo, uomini per cognome o nome e cognome", key="t_g3")
+            st.markdown("<div class='item-help-checkbox'>Es. in un articolo si scrive \"Giorgia ha dichiarato...\" per riferirsi a una politica donna, mentre nello stesso testo si scrive \"Salvini ha replicato...\" per riferirsi a un politico uomo.</div>", unsafe_allow_html=True)
+            t4  = st.checkbox("Cognome di una donna preceduto da articolo (la Meloni, la Rossi)", key="t_g4")
+            st.markdown("<div class='item-help-checkbox'>Es. nello stesso testo si trova \"la Meloni\" e \"Salvini\" — l'articolo davanti al cognome femminile, assente per quello maschile, marca un'asimmetria di trattamento.</div>", unsafe_allow_html=True)
+            t5  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)", key="t_g5")
+            t6  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",      key="t_g6")
+            t7  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",               key="t_g7")
             st.markdown("<div class='item-help-checkbox'>Es. aggettivi come \"delicata\", \"emotiva\", \"irrazionale\", \"isterica\" riferiti a donne; diminutivi come \"dottoressa\" usato in modo sminuente rispetto a \"dottore\".</div>", unsafe_allow_html=True)
-            t6  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",           key="t_g6")
-            t7  = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",        key="t_g7")
+            t8  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",           key="t_g8")
+            t9  = st.checkbox("Generalizzazioni sulle donne (es. 'tutte le donne sono/fanno')",          key="t_g9")
+            st.markdown("<div class='item-help-checkbox'>Es. affermazioni come \"le donne sono più emotive\", \"tutte le madri capiscono\", che attribuiscono caratteristiche o comportamenti all'intera categoria.</div>", unsafe_allow_html=True)
+            t10 = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",        key="t_g10")
             st.markdown("<div class='item-help-checkbox'>Es. termini come \"strega\", \"oca\"; espressioni che associano donne ad animali in chiave denigratoria; linguaggio che normalizza violenza o sottomissione.</div>", unsafe_allow_html=True)
 
         with c2:
             st.markdown("**Stereotipi etnici**")
-            t8  = st.checkbox("Uso di stereotipi comparativi basati sull'etnia",          key="t_e1")
+            t11 = st.checkbox("Uso di stereotipi comparativi basati sull'etnia",          key="t_e1")
             st.markdown("<div class='item-help-checkbox'>Es. \"fumare come un turco\", \"essere preciso come uno svizzero\" — costrutti che attribuiscono qualità o difetti a un'intera etnia.</div>", unsafe_allow_html=True)
-            t9  = st.checkbox("Antonomasia stereotipata basata sull'etnia",                key="t_e2")
+            t12 = st.checkbox("Antonomasia stereotipata basata sull'etnia",                key="t_e2")
             st.markdown("<div class='item-help-checkbox'>Es. usare il nome di un gruppo etnico come sinonimo di un comportamento o difetto, come se l'appartenenza al gruppo spiegasse o giustificasse la caratteristica attribuita.</div>", unsafe_allow_html=True)
-            t10 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",       key="t_e3")
+            t13 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",       key="t_e3")
             st.markdown("<div class='item-help-checkbox'>Es. termini storicamente usati in senso dispregiativo verso specifici gruppi etnici, o affermazioni generalizzanti come \"tutti gli immigrati sono...\"</div>", unsafe_allow_html=True)
-            t11 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",         key="t_e4")
+            t14 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",         key="t_e4")
             st.markdown("<div class='item-help-checkbox'>Es. paragoni o metafore che associano gruppi etnici a caratteristiche animali negative come brutalità, sporcizia o mancanza di civiltà.</div>", unsafe_allow_html=True)
         st.session_state.punti_testo = (
-            1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
+            1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14]) else 0
         )
 
     with tabs[7]:
@@ -772,9 +792,18 @@ with col_input:
 
         with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
             score_f = 0.0
+            outfits_f_pesi = []
             for label, peso in SCORE_IMG_GENDER.items():
-                if st.checkbox(label, key=f"img_f_{label}"):
-                    score_f += peso
+                checked = st.checkbox(label, key=f"img_f_{label}")
+                if checked:
+                    if label in CATEGORIAL_GROUP_OUTFITS:
+                        # Outfits è categoriale (LG): se l'utente spunta più di
+                        # un'opzione, prevale quella di gravità maggiore.
+                        outfits_f_pesi.append(peso)
+                    else:
+                        score_f += peso
+            if outfits_f_pesi:
+                score_f += max(outfits_f_pesi)
             if score_f > 4:   label_f = "ALTO"
             elif score_f > 2: label_f = "MEDIO"
             else:             label_f = "BASSO"
@@ -782,15 +811,31 @@ with col_input:
 
         with st.expander("INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)"):
             score_mf = 0.0
+            setting_mf_pesi = []
             for label, peso in SCORE_IMG_INTERACT.items():
-                if st.checkbox(label, key=f"img_mf_{label}"):
-                    score_mf += peso
+                checked = st.checkbox(label, key=f"img_mf_{label}")
+                if checked:
+                    if label in CATEGORIAL_GROUP_SETTING:
+                        # Setting è categoriale (LG): se l'utente spunta sia
+                        # 'domestico' sia 'professionale', prevale il max.
+                        setting_mf_pesi.append(peso)
+                    else:
+                        score_mf += peso
+            if setting_mf_pesi:
+                score_mf += max(setting_mf_pesi)
             st.divider()
             st.caption("Variabili femminili applicabili al gruppo M/F:")
+            outfits_mf_pesi = []
             for label, peso in SCORE_IMG_GENDER.items():
                 if label not in ESCLUSIONI_MF:
-                    if st.checkbox(label, key=f"img_mf_inherit_{label}"):
-                        score_mf += peso
+                    checked = st.checkbox(label, key=f"img_mf_inherit_{label}")
+                    if checked:
+                        if label in CATEGORIAL_GROUP_OUTFITS:
+                            outfits_mf_pesi.append(peso)
+                        else:
+                            score_mf += peso
+            if outfits_mf_pesi:
+                score_mf += max(outfits_mf_pesi)
             if score_mf > 8:   label_mf = "ALTO"
             elif score_mf > 4: label_mf = "MEDIO"
             else:              label_mf = "BASSO"
