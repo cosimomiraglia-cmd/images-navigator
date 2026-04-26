@@ -6,105 +6,16 @@ from datetime import datetime
 # CONFIGURAZIONE DELLA PAGINA
 # ═══════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="IMAGES NAVIGATOR",
+    page_title="IMAGES AUDIT",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ═══════════════════════════════════════════════════════════
-# PALETTE UFFICIALE PROGETTO PRIN PNRR
+# STILI — tutti gli stili sono in styles.py
 # ═══════════════════════════════════════════════════════════
-C_PRIMARY = "#e3286d"
-C_DARK    = "#565656"
-C_MEDIUM  = "#a5a5a5"
-C_BG      = "#e2ddd9"
-
-# ═══════════════════════════════════════════════════════════
-# CUSTOM CSS
-# ═══════════════════════════════════════════════════════════
-st.markdown(f"""
-    <style>
-    .stApp {{ background-color: {C_BG}; }}
-
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 15px;
-        background-color: transparent;
-        padding: 15px 0px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        height: 65px;
-        border-radius: 10px;
-        background-color: white;
-        border: 2px solid {C_MEDIUM};
-        padding: 0px 25px;
-        transition: all 0.4s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }}
-    .stTabs [data-baseweb="tab"] p {{
-        font-size: 15px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: {C_DARK};
-    }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {C_PRIMARY} !important;
-        border-color: {C_PRIMARY} !important;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(227, 40, 109, 0.25);
-    }}
-    .stTabs [aria-selected="true"] p {{ color: white !important; }}
-
-    .result-card {{
-        background-color: white;
-        padding: 28px;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-        margin-bottom: 10px;
-    }}
-    .measure-label {{
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: {C_MEDIUM};
-        margin-bottom: 6px;
-    }}
-    .measure-value {{
-        font-size: 15px;
-        font-weight: 700;
-        padding: 12px 14px;
-        border-radius: 8px;
-    }}
-    h1, h2, h3, h4, .stButton button, .stDownloadButton button {{
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: {C_DARK} !important;
-    }}
-    .stTextInput input {{
-        border-radius: 8px;
-        border: 1px solid {C_MEDIUM};
-        background-color: #ffffff;
-    }}
-    /* Stile per i radio button come gruppo di opzioni */
-    div[data-testid="stRadio"] > div[role="radiogroup"] {{
-        gap: 6px;
-    }}
-    div[data-testid="stRadio"] > div[role="radiogroup"] label {{
-        border: 1.5px solid {C_MEDIUM};
-        border-radius: 6px;
-        padding: 4px 12px;
-        background: white;
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 0.15s;
-    }}
-    .item-divider {{
-        border: none;
-        border-top: 1px solid #ede9e1;
-        margin: 10px 0;
-    }}
-    </style>
-""", unsafe_allow_html=True)
+from styles import apply_styles, C_PRIMARY, C_DARK, C_MEDIUM, C_BG
+apply_styles()
 
 # ═══════════════════════════════════════════════════════════
 # DOMINI APPLICATIVI
@@ -140,11 +51,11 @@ TUTTE_DIMENSIONI = [
 # "NV"  → non ancora verificato / non applicabile → contributo = 0
 #          ma decrementa la copertura
 # ═══════════════════════════════════════════════════════════
-STATO_OPTIONS  = ["SI", "NO", "NV"]
+STATO_OPTIONS  = ["NV", "SI", "NO"]
 STATO_LABELS   = {
-    "SI": "✓  Sì, verificato",
-    "NO": "✗  No, problema rilevato",
-    "NV": "—  Non verificato / N.A."
+    "NV": "N.A.",
+    "SI": "Sì",
+    "NO": "No",
 }
 
 # ═══════════════════════════════════════════════════════════
@@ -158,22 +69,6 @@ def get_intersectional_multiplier(n_dim, n_livelli, dominio):
     saturazione_curva = min(saturazione, 1.0) ** 0.6
     valore = 1.0 + (m_max - 1.0) * saturazione_curva
     return round(valore, 2)
-
-# ═══════════════════════════════════════════════════════════
-# METODO PERCENTILE CON FALLBACK TEORICO
-# ═══════════════════════════════════════════════════════════
-def esito_percentile(punteggio, dominio):
-    p = PERCENTILI_BENCHMARK.get(dominio, {})
-    soglia_teorica = DOMINI[dominio]["threshold"]
-    p75 = p.get("p75") or soglia_teorica
-    p25 = p.get("p25") or round(p75 / 3, 2)
-    is_empirical = p.get("p75") is not None
-    label_status = "" if is_empirical else " (Stima Teorica)"
-    if punteggio >= p75:
-        return f"🔴 ALTO (> 75° pct){label_status}", "#f8d7da", "#721c24"
-    if punteggio <= p25:
-        return f"🟢 BASSO (< 25° pct){label_status}", "#d4edda", "#155724"
-    return f"🟡 MEDIO (25°–75° pct){label_status}", "#fff3cd", "#856404"
 
 # ═══════════════════════════════════════════════════════════
 # METODO CONTEGGIO — metodo operativo IMAGES
@@ -215,84 +110,115 @@ def esito_punteggio(punteggio_finale, soglia):
 AUDIT_ITEMS = {
     "PREP": [
         {"key": "prep_1",
-         "label": "Il caso d'uso e il target del sistema sono stati chiaramente definiti?",
+         "label": "Il caso d'uso del sistema è stato chiaramente definito e documentato?",
+         "help": "Es. un documento interno — come una scheda prodotto, un design document o una sezione della documentazione tecnica — che descriva in forma concreta lo use case. Per esempio: \"chatbot di assistenza clienti per una compagnia assicurativa, utilizzato dagli operatori del customer service per rispondere a richieste standard e instradare quelle complesse agli specialisti.\"",
          "weight": 1.0, "dimensions": [], "level": "", "tag": "PREP"},
         {"key": "prep_2",
-         "label": "Sono stati selezionati gli indicatori di equità rilevanti per il dominio?",
+         "label": "Sono stati identificati gli utenti del sistema?",
+         "help": None,
          "weight": 1.0, "dimensions": [], "level": "", "tag": "PREP"},
         {"key": "prep_3",
-         "label": "Stakeholder e gruppi vulnerabili sono stati coinvolti nella fase di progettazione?",
+         "label": "Sono stati identificati i gruppi impattati dal sistema e analizzati i rischi di discriminazione a cui potrebbero essere esposti (es. di genere, etnia, età, disabilità)?",
+         "help": None,
+         "weight": 1.0, "dimensions": ["genere", "etnia", "età", "disabilità"], "level": "", "tag": "PREP"},
+        {"key": "prep_4",
+         "label": "Sono stati coinvolti gruppi marginalizzati nella progettazione del sistema (es. consultazione, co-design, test)?",
+         "help": None,
          "weight": 1.0, "dimensions": ["genere", "etnia"], "level": "", "tag": "PREP"},
     ],
     "DATI": [
         {"key": "dat_1",
-         "label": "I dati di training riflettono la distribuzione demografica del target di riferimento?",
+         "label": "I dati di training sono rappresentativi della popolazione target (intesa come popolazione su cui il sistema sarà applicato)?",
+         "help": "Es. un sistema di riconoscimento facciale addestrato su immagini che includono persone di diverse età, etnie e generi in proporzioni simili a quelle della popolazione che utilizzerà il sistema.",
          "weight": None, "dimensions": ["genere", "etnia", "età"], "level": "dati", "tag": "DATI"},
         {"key": "dat_2",
-         "label": "Le etichette del dataset sono state verificate per escludere stereotipi storici o discriminatori?",
+         "label": "Le etichette del dataset sono state verificate per individuare e correggere associazioni stereotipate o discriminatorie?",
+         "help": "Le etichette sono le categorie o annotazioni usate per classificare i dati. Es. in un dataset di immagini professionali, l'etichetta \"medico\" è associata quasi esclusivamente a figure maschili, mentre \"infermiere\" a figure femminili.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "dati", "tag": "DATI"},
         {"key": "dat_3",
-         "label": "Sono state adottate strategie di riequilibrio per i gruppi sottorappresentati?",
+         "label": "Sono stati identificati squilibri nella rappresentazione dei gruppi nei dati di training?",
+         "help": "Es. un'analisi della composizione del dataset che calcoli la percentuale di esempi per ciascun gruppo (per genere, etnia, fascia d'età) ed evidenzi quali gruppi sono sottorappresentati rispetto alla popolazione target.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "dati", "tag": "DATI"},
         {"key": "dat_4",
-         "label": "Il dataset è documentato con un Data Sheet o documento equivalente che ne espliciti i rischi?",
+         "label": "Sono state adottate tecniche per mitigare squilibri tra gruppi nei dati (es. bilanciamento, pesatura)?",
+         "help": "Se alcuni gruppi sono numericamente minoritari nel dataset, tecniche come oversampling o pesatura dei campioni possono correggere lo squilibrio. Rilevante solo se l'item precedente ha rilevato squilibri.",
+         "weight": None, "dimensions": ["genere", "etnia"], "level": "dati", "tag": "DATI"},
+        {"key": "dat_5",
+         "label": "Esiste una documentazione del dataset (origine, composizione, limiti e rischi)?",
+         "help": "Un Data Sheet è un documento standard che descrive origine, composizione, limitazioni e rischi noti di un dataset. Non deve necessariamente chiamarsi così: va bene qualsiasi documento che renda tracciabili queste informazioni.",
          "weight": None, "dimensions": [], "level": "dati", "tag": "DATI"},
     ],
     "TEAM": [
         {"key": "tea_1",
-         "label": "Il team include prospettive diverse per genere, etnia e background disciplinare?",
+         "label": "Il team include o ha consultato prospettive diverse per genere, etnia e background disciplinare?",
+         "help": "Es. un team che include oltre agli ingegneri anche figure con competenze in scienze sociali, diritto antidiscriminatorio o design dell'accessibilità, con diverse prospettive di genere ed etnia rappresentate nella sua composizione.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "team", "tag": "TEAM"},
         {"key": "tea_2",
-         "label": "Le variabili proxy che potrebbero penalizzare gruppi protetti sono state identificate?",
+         "label": "È stata condotta un'analisi per identificare variabili proxy (variabili apparentemente neutre che riflettono caratteristiche sensibili come genere o etnia)?",
+         "help": "Es. il codice postale come indicatore indiretto di etnia o classe sociale, il nome come indicatore di genere o origine culturale.",
          "weight": None, "dimensions": ["genere", "etnia", "età", "disabilità"], "level": "team", "tag": "TEAM"},
         {"key": "tea_3",
-         "label": "Il team include o consulta competenze in ambito DEI (Diversity, Equity, Inclusion)?",
+         "label": "Il team include o ha consultato competenze specifiche in ambito di equità, diversità e inclusione?",
+         "help": "Es. consulenza con associazioni che rappresentano gruppi marginalizzati, revisione esterna da parte di esperti di discriminazione algoritmica, o formazione specifica del team su questi temi.",
          "weight": None, "dimensions": [], "level": "team", "tag": "TEAM"},
         {"key": "tea_4",
-         "label": "Le scelte di design rilevanti sono registrate in un registro decisionale tracciabile?",
+         "label": "Le principali scelte progettuali (es. dati, variabili, metriche) sono documentate con le relative motivazioni?",
+         "help": "Es. un documento che riporti perché sono state scelte certe variabili di input, quali alternative sono state scartate e con quale motivazione.",
          "weight": None, "dimensions": [], "level": "team", "tag": "TEAM"},
     ],
     "MODELLO": [
+        # Ordine visuale aggiornato secondo la discussione: metriche → test → misure → limiti.
+        # I key sono ri-numerati secondo la nuova sequenza.
         {"key": "mod_1",
          "label": "Le metriche di performance sono state calcolate separatamente per i gruppi demografici rilevanti?",
+         "help": "Es. un sistema di selezione del credito che ha un'accuratezza complessiva del 90% ma produce errori sistematici per le donne o per determinate etnie — un problema invisibile guardando solo il dato aggregato.",
          "weight": None, "dimensions": ["genere", "etnia", "età"], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_2",
-         "label": "Il modello è stato testato con prompt o input avversariali relativi a genere ed etnia?",
+         "label": "Sono stati condotti test controfattuali, variando solo le caratteristiche demografiche dell'input, per verificare la coerenza del sistema?",
+         "help": "Es. due profili identici in tutto tranne che per il nome — uno tipicamente maschile, uno femminile — producono la stessa risposta dal sistema.",
          "weight": None, "dimensions": ["genere", "etnia"], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_3",
-         "label": "Il sistema dispone di una Model Card aggiornata che documenta limiti, rischi e gruppi a rischio?",
+         "label": "Sono state adottate misure per ridurre eventuali disparità di performance tra gruppi?",
+         "help": "Es. se il sistema mostrava tassi di approvazione diversi per uomini e donne con lo stesso profilo, sono stati introdotti aggiustamenti che hanno ridotto o eliminato il divario.",
          "weight": None, "dimensions": [], "level": "modello", "tag": "MODELLO"},
         {"key": "mod_4",
-         "label": "Sono stati implementati filtri o meccanismi per mitigare le disparità di performance rilevate?",
+         "label": "I limiti del sistema (tecnici, contestuali o relativi a specifici gruppi) sono documentati?",
+         "help": "Es. \"questo sistema è stato sviluppato e testato su popolazione adulta italiana — l'uso su altri contesti geografici o demografici richiede una nuova validazione\".",
          "weight": None, "dimensions": [], "level": "modello", "tag": "MODELLO"},
     ],
     "UTENTI": [
         {"key": "ute_1",
-         "label": "Il rischio di echo-chamber o polarizzazione è stato analizzato nel contesto del sistema?",
+         "label": "È stato valutato il rischio che il sistema amplifichi contenuti polarizzanti o riduca la diversità informativa?",
+         "help": "Rilevante soprattutto per sistemi che selezionano o raccomandano contenuti agli utenti (motori di ricerca, piattaforme di social media, sistemi di raccomandazione). Es. un algoritmo che mostra agli utenti solo contenuti affini alle loro opinioni precedenti, riducendo l'esposizione a prospettive diverse.",
          "weight": None, "dimensions": [], "level": "utenti", "tag": "UTENTI"},
         {"key": "ute_2",
-         "label": "Gli utenti dispongono di canali accessibili e visibili per segnalare output ritenuti ingiusti?",
+         "label": "Esiste un meccanismo per permettere agli utenti di segnalare output problematici o discriminatori?",
+         "help": "Es. un pulsante \"segnala problema\" nell'interfaccia, un form dedicato, un canale di contatto esplicito per contestare output automatizzati. La presenza di questo meccanismo è obbligatoria secondo l'AI Act per i sistemi ad alto rischio.",
          "weight": None, "dimensions": [], "level": "utenti", "tag": "UTENTI"},
         {"key": "ute_3",
-         "label": "L'interfaccia è stata progettata per essere accessibile a utenti con esigenze e abilità diverse?",
+         "label": "L'interfaccia del sistema è stata valutata rispetto a standard di accessibilità (es. WCAG)?",
+         "help": "Le WCAG (Web Content Accessibility Guidelines) sono le linee guida internazionali per l'accessibilità dei sistemi digitali. Il livello minimo raccomandato è AA. Strumenti di verifica automatica: Lighthouse, axe, WAVE.",
          "weight": None, "dimensions": ["disabilità", "età"], "level": "utenti", "tag": "UTENTI"},
     ],
     "CONTESTO": [
         {"key": "con_1",
-         "label": "Il sistema è conforme alle normative vigenti in materia (es. AI Act, GDPR)?",
+         "label": "Il sistema è stato verificato rispetto alle normative applicabili (es. GDPR, AI Act)?",
+         "help": "La verifica deve essere documentata, non solo una revisione informale. Es. una DPIA (Data Protection Impact Assessment) per il GDPR, una classificazione del rischio secondo l'AI Act con le misure di conformità associate, o il parere di un consulente legale specializzato.",
          "weight": 2.5, "dimensions": [], "level": "contesto", "tag": "CONTESTO"},
         {"key": "con_2",
-         "label": "Esistono meccanismi di governance partecipativa che includano rappresentanti delle comunità impattate?",
+         "label": "I gruppi impattati hanno avuto modo di fornire feedback sul sistema (durante lo sviluppo, il testing o dopo il rilascio)?",
+         "help": "Es. focus group con rappresentanti dei gruppi impattati prima del rilascio, interviste qualitative con utenti effettivi dopo la messa in produzione, survey periodiche, oppure canali strutturati di raccolta feedback attivati nell'interfaccia. Non è sufficiente la sola possibilità di reclamo — serve una raccolta attiva.",
          "weight": 2.0, "dimensions": ["genere", "etnia"], "level": "contesto", "tag": "CONTESTO"},
         {"key": "con_3",
-         "label": "Sono condotte valutazioni d'impatto periodiche sui diritti fondamentali degli utenti?",
+         "label": "È stata condotta una valutazione dell'impatto del sistema sui diritti e le opportunità delle persone?",
+         "help": "L'AI Act introduce la FRIA (Fundamental Rights Impact Assessment) per i sistemi ad alto rischio. Indipendentemente dall'obbligo formale, l'item chiede se è stata condotta un'analisi sistematica degli effetti che il sistema produce sui diritti fondamentali (dignità, non discriminazione, privacy, libertà di espressione) e sulle opportunità (accesso al lavoro, al credito, ai servizi) delle persone.",
          "weight": 2.0, "dimensions": [], "level": "contesto", "tag": "CONTESTO"},
     ],
 }
 
 def get_pesi_dinamici(dominio, w_dati, w_team, w_mod, w_ut):
     return {
-        "dat_1": w_dati, "dat_2": w_dati, "dat_3": w_dati, "dat_4": w_dati,
+        "dat_1": w_dati, "dat_2": w_dati, "dat_3": w_dati, "dat_4": w_dati, "dat_5": w_dati,
         "tea_1": w_team, "tea_2": w_team, "tea_3": w_team, "tea_4": w_team,
         "mod_1": w_mod,  "mod_2": w_mod,  "mod_3": w_mod,  "mod_4": w_mod,
         "ute_1": w_ut,   "ute_2": w_ut,   "ute_3": w_ut,
@@ -302,7 +228,7 @@ def get_pesi_dinamici(dominio, w_dati, w_team, w_mod, w_ut):
 # PARAMETRI IMMAGINI
 # ═══════════════════════════════════════════════════════════
 SCORE_IMG_GENDER = {
-    "La figura tocca se stessa (auto-contatto)": 1.0,
+    "La figura tocca sé stessa (auto-contatto)": 1.0,
     "La figura tocca un oggetto in modo non funzionale all'azione": 1.0,
     "Inquadratura frammentata (focus su dettagli del corpo, escluso il volto)": 1.0,
     "Nudità totale": 1.0,
@@ -314,10 +240,10 @@ SCORE_IMG_GENDER = {
 }
 SCORE_IMG_INTERACT = {
     "Donne ritratte sorridenti, uomini con espressione seria": 1.0,
-    "Donne in posa passiva/stazionaria, uomini impegnati in un'azione": 1.0,
+    "Donne in posa passiva o stazionaria, uomini impegnati in un'azione": 1.0,
     "Contesto domestico: solo la donna si occupa dei figli o delle faccende": 1.0,
     "Contesto professionale: l'uomo occupa il ruolo gerarchico superiore": 1.0,
-    "Uomini al centro/primo piano, donne relegate allo sfondo": 1.0,
+    "Uomini al centro o in primo piano, donne relegate allo sfondo": 1.0,
     "Uomini in piedi, donne sedute, sdraiate o inginocchiate": 1.0,
     "L'uomo è ritratto fisicamente più alto della donna": 1.0,
     "L'uomo guarda verso l'osservatore, la donna ha lo sguardo distolto": 1.0,
@@ -333,6 +259,20 @@ ESCLUSIONI_MF = [
     "Sguardo distolto (non rivolto verso l'osservatore)",
 ]
 
+# Gruppi categoriali nel modulo Immagini.
+# Le linee guida IMAGES presentano alcune variabili come alternative reciprocamente
+# esclusive (es. "Outfits": nuda OR parzialmente svestita). Il codice mantiene
+# checkbox indipendenti per uniformità di interfaccia, ma aggrega col massimo
+# anziché con la somma per rispettare il vincolo categoriale.
+CATEGORIAL_GROUP_OUTFITS = [
+    "Nudità totale",
+    "Nudità parziale o abbigliamento esplicitamente succinto",
+]
+CATEGORIAL_GROUP_SETTING = [
+    "Contesto domestico: solo la donna si occupa dei figli o delle faccende",
+    "Contesto professionale: l'uomo occupa il ruolo gerarchico superiore",
+]
+
 # ═══════════════════════════════════════════════════════════
 # INIZIALIZZAZIONE SESSION STATE
 # ═══════════════════════════════════════════════════════════
@@ -344,17 +284,23 @@ _defaults = {
     "_last_upload_hash": None,
     "_restored_dominio": "",
     "_restored_dimensioni": [],
-    "_onboarding_done": False,   # False = mostra onboarding al primo accesso
-    "_migrazione_v1": False,
+    "_onboarding_done": False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# Inizializza tutti gli item a "NV" se non già presenti
+# Pre-inizializzazione di tutti i key degli item audit a "NV".
+# Deve avvenire qui — prima di qualsiasi widget, sidebar inclusa —
+# perché Streamlit inizializza i radio button alla prima opzione ("SI")
+# se il key non è ancora presente in session_state al momento del render.
+# La sidebar esegue prima dei tab, quindi calcola_copertura() leggerebbe
+# valori "SI" se questa inizializzazione avvenisse più tardi.
+# La condizione `not in STATO_OPTIONS` gestisce anche valori anomali
+# da versioni precedenti del file di sessione.
 for _gruppo, _items in AUDIT_ITEMS.items():
     for _item in _items:
-        if _item["key"] not in st.session_state:
+        if st.session_state.get(_item["key"]) not in STATO_OPTIONS:
             st.session_state[_item["key"]] = "NV"
 
 # ═══════════════════════════════════════════════════════════
@@ -365,6 +311,11 @@ for _gruppo, _items in AUDIT_ITEMS.items():
 # quando il campo non è visibile.
 # ═══════════════════════════════════════════════════════════
 def render_audit_item(item, weight_override=None):
+    # Guardia secondaria: gestisce casi residui in cui il key fosse
+    # arrivato con un valore non ammesso nonostante la pre-inizializzazione.
+    if st.session_state.get(item["key"]) not in STATO_OPTIONS:
+        st.session_state[item["key"]] = "NV"
+
     stato_corrente = st.session_state.get(item["key"], "NV")
 
     col_q, col_note = st.columns([1.6, 1])
@@ -377,9 +328,14 @@ def render_audit_item(item, weight_override=None):
             key=item["key"],
             horizontal=True,
         )
+        # Testo di aiuto sempre visibile, in corsivo grigio
+        if item.get("help"):
+            st.markdown(
+                f"<div class='item-help'>{item['help']}</div>",
+                unsafe_allow_html=True
+            )
 
     with col_note:
-        # La nota è sempre in session_state ma visibile solo se NO
         if stato_corrente == "NO":
             st.text_input(
                 "Evidenza o azione prevista",
@@ -443,7 +399,7 @@ def serialize_session(info):
             dati_audit[item["key"]] = st.session_state.get(item["key"], "NV")
             dati_audit[f"note_{item['key']}"] = st.session_state.get(f"note_{item['key']}", "")
 
-    for k in [f"t_g{i}" for i in range(1, 8)] + [f"t_e{i}" for i in range(1, 5)]:
+    for k in [f"t_g{i}" for i in range(1, 11)] + [f"t_e{i}" for i in range(1, 5)]:
         dati_audit[k] = st.session_state.get(k, False)
 
     for label in SCORE_IMG_GENDER:
@@ -455,7 +411,7 @@ def serialize_session(info):
         dati_audit[f"img_e_{label}"] = st.session_state.get(f"img_e_{label}", False)
 
     return {
-        "versione": "1.1",
+        "versione": "1.0",
         "timestamp": datetime.now().isoformat(),
         "info": info,
         "audit": dati_audit,
@@ -463,21 +419,10 @@ def serialize_session(info):
 
 def restore_session(payload):
     try:
-        migrazione_effettuata = False
         for key, value in payload.get("audit", {}).items():
-            # Migrazione dalla versione 1.0 (booleani) alla 1.1 (stringhe SI/NO/NV).
-            # True → "NO" (mancanza rilevata = problema rilevato, framing invertito).
-            # False → "NV": nel vecchio sistema False poteva significare sia "verificato
-            # e in ordine" sia "non ancora verificato". La conversione conservativa in
-            # "NV" è più onesta che assumere falsamente la verifica — l'utente rivaluterà.
-            if isinstance(value, bool):
-                st.session_state[key] = "NO" if value else "NV"
-                migrazione_effettuata = True
-            else:
-                st.session_state[key] = value
+            st.session_state[key] = value
         st.session_state["_session_restored"]  = True
         st.session_state["_session_timestamp"] = payload.get("timestamp", "—")
-        st.session_state["_migrazione_v1"]     = migrazione_effettuata
         info = payload.get("info", {})
         st.session_state["_restored_dominio"]    = info.get("dominio", "")
         st.session_state["_restored_dimensioni"] = info.get("dimensioni_dichiarate", [])
@@ -516,13 +461,13 @@ with st.sidebar:
     st.markdown("**COPERTURA AUDIT**")
     st.progress(pct_cov / 100)
     if pct_cov == 100:
-        colore_prog, stato_prog = "#28a745", "✅ Tutti gli item verificati"
+        progress_class, stato_prog = "ok", "✅ Tutti gli item verificati"
     elif pct_cov >= 50:
-        colore_prog, stato_prog = "#856404", f"In corso — {n_ver}/{n_tot_cov} item"
+        progress_class, stato_prog = "warn", f"In corso — {n_ver}/{n_tot_cov} item"
     else:
-        colore_prog, stato_prog = "#a5a5a5", f"Avviato — {n_ver}/{n_tot_cov} item"
+        progress_class, stato_prog = "info", f"Avviato — {n_ver}/{n_tot_cov} item"
     st.markdown(
-        f"<p style='font-size:12px;color:{colore_prog};margin-top:4px;'>{stato_prog}</p>",
+        f"<p class='sb-progress-label {progress_class}'>{stato_prog}</p>",
         unsafe_allow_html=True
     )
 
@@ -531,12 +476,6 @@ with st.sidebar:
     if st.session_state["_session_restored"]:
         ts = st.session_state["_session_timestamp"]
         st.success(f"Sessione ripristinata\n{ts[:16].replace('T', ' ')}")
-        if st.session_state.get("_migrazione_v1"):
-            st.warning(
-                "⚠️ File da versione precedente. Gli item non problematici "
-                "sono stati impostati a 'Non verificato' — rivalutali per "
-                "una copertura accurata."
-            )
 
     info_correnti = {
         "dominio": dominio_scelto,
@@ -553,7 +492,7 @@ with st.sidebar:
         use_container_width=True,
     )
 
-    st.markdown("**Riprendi audit**")
+    st.markdown("**Carica sessione**")
     uploaded = st.file_uploader(
         "Carica file sessione (.json)",
         type=["json"],
@@ -584,7 +523,9 @@ with st.sidebar:
     # Pulsante per riaprire la guida introduttiva in qualsiasi momento
     if st.button("❓ Guida introduttiva", use_container_width=True):
         st.session_state["_onboarding_done"] = False
-        st.rerun()
+        # Il click sul pulsante causa già un rerun automatico.
+        # st.rerun() esplicito dentro with st.sidebar può essere
+        # instabile in alcune versioni di Streamlit — non necessario.
 
     st.divider()
     st.markdown("**NOTA METODOLOGICA**")
@@ -599,41 +540,30 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════
 if not st.session_state["_onboarding_done"]:
 
-    st.markdown(f"""
-        <div style="max-width:800px; margin:0 auto; padding-top:20px;">
-        <div style="background:linear-gradient(140deg,#1B2D45 0%,#2A4060 100%);
-                    border-radius:16px; padding:40px 44px 36px; color:white;
-                    margin-bottom:28px;">
-            <div style="font-size:11px; font-weight:700; letter-spacing:2px;
-                        color:rgba(255,255,255,0.5); text-transform:uppercase;
-                        margin-bottom:10px;">
-                Progetto PRIN PNRR · IMAGES
-            </div>
-            <div style="font-size:36px; font-weight:800; margin-bottom:10px;
-                        color:white; letter-spacing:-0.5px;">
-                IMAGES NAVIGATOR
-            </div>
-            <div style="font-size:16px; opacity:0.85; line-height:1.6; max-width:580px;">
+    # Logo progetto — sostituire il percorso con il PNG del logo reale
+    # Es: st.image("assets/logo_images.png", width=180)
+    st.markdown("""
+        <div class="ob-container">
+          <div class="ob-hero">
+            <div class="ob-hero-tag">Progetto PRIN PNRR · IMAGES</div>
+            <div class="ob-hero-title">IMAGES AUDIT</div>
+            <div class="ob-hero-sub">
                 Uno strumento di supporto per chi sviluppa sistemi di intelligenza
                 artificiale e vuole valutare — e migliorare — la loro inclusività
                 rispetto a genere ed etnia.
             </div>
-        </div>
+          </div>
         </div>
     """, unsafe_allow_html=True)
 
     col_ob1, col_ob2 = st.columns(2, gap="medium")
 
     with col_ob1:
-        st.markdown(f"""
-            <div style="background:white; border-radius:12px; padding:24px 26px;
-                        border-left:5px solid {C_PRIMARY}; margin-bottom:16px;">
-                <div style="font-size:11px; font-weight:700; letter-spacing:1.5px;
-                            color:{C_MEDIUM}; text-transform:uppercase; margin-bottom:10px;">
-                    Il progetto
-                </div>
-                <p style="color:{C_DARK}; font-size:14px; line-height:1.65; margin:0;">
-                    IMAGES Navigator nasce nell'ambito del progetto
+        st.markdown("""
+            <div class="ob-card primary">
+                <div class="ob-card-label">Il progetto</div>
+                <p class="ob-card-body">
+                    IMAGES Audit nasce nell'ambito del progetto
                     <strong>IMAGES</strong> (<em>Inclusive Machine Learning using
                     Art and Culture for tackling Gender and Ethnicity Stereotypes</em>),
                     finanziato dal PRIN PNRR e coordinato da Sapienza Università di Roma
@@ -647,14 +577,10 @@ if not st.session_state["_onboarding_done"]:
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-            <div style="background:white; border-radius:12px; padding:24px 26px;
-                        border-left:5px solid {C_MEDIUM}; margin-bottom:16px;">
-                <div style="font-size:11px; font-weight:700; letter-spacing:1.5px;
-                            color:{C_MEDIUM}; text-transform:uppercase; margin-bottom:10px;">
-                    A chi è rivolto
-                </div>
-                <p style="color:{C_DARK}; font-size:14px; line-height:1.65; margin:0;">
+        st.markdown("""
+            <div class="ob-card">
+                <div class="ob-card-label">A chi è rivolto</div>
+                <p class="ob-card-body">
                     A chiunque sia coinvolto nello sviluppo o nella valutazione di
                     sistemi IA: sviluppatori, designer, ricercatori, product manager,
                     policy maker, auditor. Non richiede competenze avanzate di
@@ -664,59 +590,44 @@ if not st.session_state["_onboarding_done"]:
         """, unsafe_allow_html=True)
 
     with col_ob2:
-        st.markdown(f"""
-            <div style="background:white; border-radius:12px; padding:24px 26px;
-                        border-left:5px solid {C_PRIMARY}; margin-bottom:16px;">
-                <div style="font-size:11px; font-weight:700; letter-spacing:1.5px;
-                            color:{C_MEDIUM}; text-transform:uppercase; margin-bottom:10px;">
-                    Come funziona
-                </div>
-                <p style="color:{C_DARK}; font-size:14px; line-height:1.65; margin:0;">
+        st.markdown("""
+            <div class="ob-card primary">
+                <div class="ob-card-label">Come funziona</div>
+                <p class="ob-card-body">
                     Lo strumento pone domande di verifica su cinque livelli della
                     pipeline (Dati, Team, Modello, Utenti, Contesto) più due moduli
                     per testi e immagini. Per ogni domanda hai tre opzioni:
                 </p>
-                <div style="margin-top:14px;">
-                    <div style="display:flex; align-items:flex-start; gap:10px;
-                                margin-bottom:10px;">
-                        <span style="background:#d4edda; color:#155724; padding:3px 12px;
-                                     border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">✓ Sì</span>
-                        <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            L'aspetto è stato verificato e non presenta problemi</span>
+                <div class="ob-chips-wrapper">
+                    <div class="ob-chip-row">
+                        <span class="ob-chip ob-chip-yes">Sì</span>
+                        <span class="ob-chip-text">
+                            Ho verificato questo aspetto e non ho rilevato problemi</span>
                     </div>
-                    <div style="display:flex; align-items:flex-start; gap:10px;
-                                margin-bottom:10px;">
-                        <span style="background:#f8d7da; color:#721c24; padding:3px 12px;
-                                     border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">✗ No</span>
-                        <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            L'aspetto è stato verificato e richiede attenzione</span>
+                    <div class="ob-chip-row">
+                        <span class="ob-chip ob-chip-no">No</span>
+                        <span class="ob-chip-text">
+                            Ho verificato questo aspetto e ho rilevato una criticità</span>
                     </div>
-                    <div style="display:flex; align-items:flex-start; gap:10px;">
-                        <span style="background:#f3f4f6; color:#6b7280; padding:3px 12px;
-                                     border-radius:5px; font-size:12px; font-weight:700;
-                                     flex-shrink:0; white-space:nowrap;">— N/V</span>
-                        <span style="color:{C_DARK}; font-size:13px; line-height:1.5;">
-                            Non ancora esaminato o non applicabile</span>
+                    <div class="ob-chip-row">
+                        <span class="ob-chip ob-chip-na">N.A.</span>
+                        <span class="ob-chip-text">
+                            Non ho ancora esaminato questo aspetto, oppure non è
+                            pertinente al mio sistema</span>
                     </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-            <div style="background:white; border-radius:12px; padding:24px 26px;
-                        border-left:5px solid {C_MEDIUM}; margin-bottom:16px;">
-                <div style="font-size:11px; font-weight:700; letter-spacing:1.5px;
-                            color:{C_MEDIUM}; text-transform:uppercase; margin-bottom:10px;">
-                    Cosa produce
-                </div>
-                <p style="color:{C_DARK}; font-size:14px; line-height:1.65; margin:0;">
-                    I risultati vengono presentati attraverso tre misure complementari:
+        st.markdown("""
+            <div class="ob-card">
+                <div class="ob-card-label">Cosa produce</div>
+                <p class="ob-card-body">
+                    I risultati vengono presentati attraverso due misure complementari:
                     il <strong>conteggio dei problemi rilevati</strong> (metodo nativo
-                    del Toolkit IMAGES), il <strong>punteggio pesato</strong> con
-                    moltiplicatore intersezionale, e la <strong>posizione percentile</strong>
-                    rispetto al benchmark di dominio.<br><br>
+                    del Toolkit IMAGES) e il <strong>punteggio ponderato</strong> con
+                    moltiplicatore intersezionale, che tiene conto del dominio applicativo
+                    e della diffusione del bias attraverso i livelli del sistema.<br><br>
                     La <strong>copertura dell'audit</strong> indica quante domande sono
                     state valutate: un rischio basso su un audit incompleto è meno
                     affidabile di uno su un audit completo.
@@ -724,17 +635,38 @@ if not st.session_state["_onboarding_done"]:
             </div>
         """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px;
-                    padding:16px 22px; margin:8px 0 24px;">
-            <span style="font-size:13px; color:#5d4037; line-height:1.65;">
-                <strong>Nota d'uso.</strong> Questo strumento è progettato per
-                supportare processi di miglioramento, non per emettere giudizi.
-                I risultati dipendono dalla completezza e dall'onestà delle risposte
-                fornite. Nessun punteggio costituisce una certificazione di conformità
-                né un obbligo legale. Lo strumento è parte di una ricerca accademica
-                in corso: i parametri saranno oggetto di validazione empirica progressiva.
-            </span>
+    # Nota d'uso generale
+    st.markdown("""
+        <div class="ob-disclaimer amber">
+            <strong>Nota d'uso.</strong> Questo strumento è progettato per
+            supportare processi di miglioramento, non per emettere giudizi.
+            I risultati dipendono dalla completezza e dall'onestà delle risposte
+            fornite. Nessun punteggio costituisce una certificazione di conformità
+            né un obbligo legale. Lo strumento è parte di una ricerca accademica
+            in corso: i parametri saranno oggetto di validazione empirica progressiva.
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Disclaimer moduli Testi e Immagini
+    st.markdown("""
+        <div class="ob-disclaimer blue">
+            <strong>Testi e Immagini.</strong> I moduli Testi e Immagini non
+            analizzano automaticamente i contenuti: richiedono che tu abbia già
+            esaminato il materiale prodotto o utilizzato dal sistema e che tu
+            risponda sulla base della tua osservazione diretta.
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Disclaimer contestuale
+    st.markdown("""
+        <div class="ob-disclaimer green">
+            <strong>Interpretazione contestuale.</strong> Alcuni indicatori —
+            in particolare nel modulo Immagini — possono essere funzionali al
+            dominio applicativo del sistema che stai valutando. La presenza di
+            nudità in un sistema di supporto diagnostico medico, ad esempio,
+            non è indicativa di oggettificazione. La responsabilità
+            dell'interpretazione contestuale di ciascun segnale rimane con
+            il valutatore.
         </div>
     """, unsafe_allow_html=True)
 
@@ -758,7 +690,7 @@ pesi_dinamici = get_pesi_dinamici(dominio_scelto, w_dati, w_team, w_mod, w_ut)
 # ═══════════════════════════════════════════════════════════
 # LAYOUT PRINCIPALE
 # ═══════════════════════════════════════════════════════════
-st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES NAVIGATOR</h1>",
+st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES AUDIT</h1>",
             unsafe_allow_html=True)
 st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
 st.write("")
@@ -783,25 +715,25 @@ with col_input:
 
     with tabs[1]:
         st.subheader("DATI")
-        st.caption(f"Peso per questo dominio: {w_dati}")
+        st.caption(f"Peso degli indicatori per questo dominio: {w_dati}")
         for item in AUDIT_ITEMS["DATI"]:
             render_audit_item(item, weight_override=w_dati)
 
     with tabs[2]:
         st.subheader("TEAM")
-        st.caption(f"Peso per questo dominio: {w_team}")
+        st.caption(f"Peso degli indicatori per questo dominio: {w_team}")
         for item in AUDIT_ITEMS["TEAM"]:
             render_audit_item(item, weight_override=w_team)
 
     with tabs[3]:
         st.subheader("MODELLO")
-        st.caption(f"Peso per questo dominio: {w_mod}")
+        st.caption(f"Peso degli indicatori per questo dominio: {w_mod}")
         for item in AUDIT_ITEMS["MODELLO"]:
             render_audit_item(item, weight_override=w_mod)
 
     with tabs[4]:
         st.subheader("UTENTI")
-        st.caption(f"Peso per questo dominio: {w_ut}")
+        st.caption(f"Peso degli indicatori per questo dominio: {w_ut}")
         for item in AUDIT_ITEMS["UTENTI"]:
             render_audit_item(item, weight_override=w_ut)
 
@@ -823,21 +755,35 @@ with col_input:
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Stereotipi di genere**")
-            t1  = st.checkbox("Uso di 'uomo/uomini' come sinonimo universale di umanità",                    key="t_g1")
-            t2  = st.checkbox("Participio declinato al maschile in presenza di maggioranza femminile",        key="t_g2")
-            t3  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)",       key="t_g3")
-            t4  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",            key="t_g4")
-            t5  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",                     key="t_g5")
-            t6  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",                 key="t_g6")
-            t7  = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",              key="t_g7")
+            t1  = st.checkbox("Uso di 'uomo/uomini' come sinonimo universale di umanità",             key="t_g1")
+            t2  = st.checkbox("Participio declinato al maschile in presenza di maggioranza femminile", key="t_g2")
+            st.markdown("<div class='item-help-checkbox'>Es. \"Gli studenti iscritti al corso sono stati ammessi alla sessione\" scritto al maschile anche quando la maggioranza è femminile.</div>", unsafe_allow_html=True)
+            t3  = st.checkbox("Asimmetria nominativa: donne chiamate per nome di battesimo, uomini per cognome o nome e cognome", key="t_g3")
+            st.markdown("<div class='item-help-checkbox'>Es. in un articolo si scrive \"Giorgia ha dichiarato...\" per riferirsi a una politica donna, mentre nello stesso testo si scrive \"Salvini ha replicato...\" per riferirsi a un politico uomo.</div>", unsafe_allow_html=True)
+            t4  = st.checkbox("Cognome di una donna preceduto da articolo (la Meloni, la Rossi)", key="t_g4")
+            st.markdown("<div class='item-help-checkbox'>Es. nello stesso testo si trova \"la Meloni\" e \"Salvini\" — l'articolo davanti al cognome femminile, assente per quello maschile, marca un'asimmetria di trattamento.</div>", unsafe_allow_html=True)
+            t5  = st.checkbox("Uso asimmetrico di appellativi (es. 'Signora' vs titolo professionale)", key="t_g5")
+            t6  = st.checkbox("Titoli professionali declinati al maschile o con suffisso 'donna'",      key="t_g6")
+            t7  = st.checkbox("Uso di aggettivi legati a fragilità emotiva o diminutivi",               key="t_g7")
+            st.markdown("<div class='item-help-checkbox'>Es. aggettivi come \"delicata\", \"emotiva\", \"irrazionale\", \"isterica\" riferiti a donne; diminutivi come \"dottoressa\" usato in modo sminuente rispetto a \"dottore\".</div>", unsafe_allow_html=True)
+            t8  = st.checkbox("Identificazione relazionale della donna (es. 'la moglie di')",           key="t_g8")
+            t9  = st.checkbox("Generalizzazioni sulle donne (es. 'tutte le donne sono/fanno')",          key="t_g9")
+            st.markdown("<div class='item-help-checkbox'>Es. affermazioni come \"le donne sono più emotive\", \"tutte le madri capiscono\", che attribuiscono caratteristiche o comportamenti all'intera categoria.</div>", unsafe_allow_html=True)
+            t10 = st.checkbox("Uso di termini d'odio, misogini o metafore animali denigratorie",        key="t_g10")
+            st.markdown("<div class='item-help-checkbox'>Es. termini come \"strega\", \"oca\"; espressioni che associano donne ad animali in chiave denigratoria; linguaggio che normalizza violenza o sottomissione.</div>", unsafe_allow_html=True)
+
         with c2:
             st.markdown("**Stereotipi etnici**")
-            t8  = st.checkbox("Uso di stereotipi comparativi (es. 'fumare come un turco')",                   key="t_e1")
-            t9  = st.checkbox("Antonomasia stereotipata basata sull'etnia",                                   key="t_e2")
-            t10 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",                          key="t_e3")
-            t11 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",                            key="t_e4")
+            t11 = st.checkbox("Uso di stereotipi comparativi basati sull'etnia",          key="t_e1")
+            st.markdown("<div class='item-help-checkbox'>Es. \"fumare come un turco\", \"essere preciso come uno svizzero\" — costrutti che attribuiscono qualità o difetti a un'intera etnia.</div>", unsafe_allow_html=True)
+            t12 = st.checkbox("Antonomasia stereotipata basata sull'etnia",                key="t_e2")
+            st.markdown("<div class='item-help-checkbox'>Es. usare il nome di un gruppo etnico come sinonimo di un comportamento o difetto, come se l'appartenenza al gruppo spiegasse o giustificasse la caratteristica attribuita.</div>", unsafe_allow_html=True)
+            t13 = st.checkbox("Uso di generalizzazioni o termini razzisti/obsoleti",       key="t_e3")
+            st.markdown("<div class='item-help-checkbox'>Es. termini storicamente usati in senso dispregiativo verso specifici gruppi etnici, o affermazioni generalizzanti come \"tutti gli immigrati sono...\"</div>", unsafe_allow_html=True)
+            t14 = st.checkbox("Deumanizzazione tramite tratti o metafore animali",         key="t_e4")
+            st.markdown("<div class='item-help-checkbox'>Es. paragoni o metafore che associano gruppi etnici a caratteristiche animali negative come brutalità, sporcizia o mancanza di civiltà.</div>", unsafe_allow_html=True)
         st.session_state.punti_testo = (
-            1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]) else 0
+            1 if any([t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14]) else 0
         )
 
     with tabs[7]:
@@ -846,9 +792,18 @@ with col_input:
 
         with st.expander("STEREOTIPI DI GENERE: PERSONAGGIO FEMMINILE SINGOLO"):
             score_f = 0.0
+            outfits_f_pesi = []
             for label, peso in SCORE_IMG_GENDER.items():
-                if st.checkbox(label, key=f"img_f_{label}"):
-                    score_f += peso
+                checked = st.checkbox(label, key=f"img_f_{label}")
+                if checked:
+                    if label in CATEGORIAL_GROUP_OUTFITS:
+                        # Outfits è categoriale (LG): se l'utente spunta più di
+                        # un'opzione, prevale quella di gravità maggiore.
+                        outfits_f_pesi.append(peso)
+                    else:
+                        score_f += peso
+            if outfits_f_pesi:
+                score_f += max(outfits_f_pesi)
             if score_f > 4:   label_f = "ALTO"
             elif score_f > 2: label_f = "MEDIO"
             else:             label_f = "BASSO"
@@ -856,15 +811,31 @@ with col_input:
 
         with st.expander("INTERAZIONE DI GENERE (MASCHILE E FEMMINILE)"):
             score_mf = 0.0
+            setting_mf_pesi = []
             for label, peso in SCORE_IMG_INTERACT.items():
-                if st.checkbox(label, key=f"img_mf_{label}"):
-                    score_mf += peso
+                checked = st.checkbox(label, key=f"img_mf_{label}")
+                if checked:
+                    if label in CATEGORIAL_GROUP_SETTING:
+                        # Setting è categoriale (LG): se l'utente spunta sia
+                        # 'domestico' sia 'professionale', prevale il max.
+                        setting_mf_pesi.append(peso)
+                    else:
+                        score_mf += peso
+            if setting_mf_pesi:
+                score_mf += max(setting_mf_pesi)
             st.divider()
             st.caption("Variabili femminili applicabili al gruppo M/F:")
+            outfits_mf_pesi = []
             for label, peso in SCORE_IMG_GENDER.items():
                 if label not in ESCLUSIONI_MF:
-                    if st.checkbox(label, key=f"img_mf_inherit_{label}"):
-                        score_mf += peso
+                    checked = st.checkbox(label, key=f"img_mf_inherit_{label}")
+                    if checked:
+                        if label in CATEGORIAL_GROUP_OUTFITS:
+                            outfits_mf_pesi.append(peso)
+                        else:
+                            score_mf += peso
+            if outfits_mf_pesi:
+                score_mf += max(outfits_mf_pesi)
             if score_mf > 8:   label_mf = "ALTO"
             elif score_mf > 4: label_mf = "MEDIO"
             else:              label_mf = "BASSO"
@@ -922,13 +893,10 @@ with col_risultati:
     audit_avviato = n_verificati > 0 or st.session_state.get("punti_testo", 0) > 0
 
     if not audit_avviato:
-        st.markdown(f"""
-            <div style='background:white; border:1px dashed {C_MEDIUM};
-                        border-radius:16px; padding:40px 24px;
-                        text-align:center; margin-top:15px;'>
-                <div style='font-size:32px; margin-bottom:12px;'>🛡️</div>
-                <p style='color:{C_MEDIUM}; font-size:14px; margin:0;
-                          text-transform:uppercase; letter-spacing:1px;'>
+        st.markdown("""
+            <div class='sc-placeholder'>
+                <div class='sc-placeholder-icon'>🛡️</div>
+                <p class='sc-placeholder-text'>
                     Inizia a rispondere alle domande<br>per visualizzare i risultati
                 </p>
             </div>
@@ -938,39 +906,30 @@ with col_risultati:
         # ── Copertura — mostrata sempre, sopra le misure di rischio ──
         n_non_ver = tot_cov - ver_cov
         if pct_cov_sc == 100:
-            cov_bg, cov_fg = "#d4edda", "#155724"
+            cov_class = "ok"
             cov_msg = "✅ Tutti gli item verificati — valutazione completa"
         elif pct_cov_sc >= 50:
-            cov_bg, cov_fg = "#fff3cd", "#856404"
+            cov_class = "warn"
             cov_msg = f"⚠️ {n_non_ver} item non ancora verificati — il rischio potrebbe essere sottostimato"
         else:
-            cov_bg, cov_fg = "#f8f9fa", "#6c757d"
+            cov_class = "info"
             cov_msg = f"ℹ️ {n_non_ver} item non ancora verificati — continua l'audit per una valutazione affidabile"
 
         st.markdown(f"""
-            <div style="background:{cov_bg}; border-radius:12px;
-                        padding:14px 18px; margin-bottom:12px;">
-                <div style="font-size:10px; font-weight:700; text-transform:uppercase;
-                            letter-spacing:1.5px; color:{cov_fg}; margin-bottom:4px;">
-                    COPERTURA AUDIT
-                </div>
-                <div style="font-size:20px; font-weight:700; color:{cov_fg};">
-                    {pct_cov_sc}% — {ver_cov}/{tot_cov} item
-                </div>
-                <div style="font-size:12px; color:{cov_fg}; margin-top:4px; line-height:1.4;">
-                    {cov_msg}
-                </div>
+            <div class="sc-coverage {cov_class}">
+                <div class="sc-coverage-label">COPERTURA AUDIT</div>
+                <div class="sc-coverage-value">{pct_cov_sc}% — {ver_cov}/{tot_cov} item</div>
+                <div class="sc-coverage-msg">{cov_msg}</div>
             </div>
         """, unsafe_allow_html=True)
 
-        # ── Calcola i tre esiti ──
+        # ── Calcola i due esiti ──
         lbl_cnt, bg_cnt, fg_cnt = esito_conteggio(n_critici)
         lbl_pts, bg_pts, fg_pts = esito_punteggio(punteggio_finale, soglia)
-        lbl_pct, bg_pct, fg_pct = esito_percentile(punteggio_finale, dominio_scelto)
 
         # ── MISURA 1: Conteggio IMAGES — primaria ──
         st.markdown(f"""
-            <div class="result-card" style="border-top: 6px solid {C_PRIMARY};">
+            <div class="result-card result-card-primary">
                 <div class="measure-label">① METODO IMAGES — CONTEGGIO PROBLEMI RILEVATI</div>
                 <div class="measure-value" style="background:{bg_cnt}; color:{fg_cnt};">
                     {lbl_cnt}
@@ -987,15 +946,12 @@ with col_risultati:
                 )
                 n_tot_gr = len(AUDIT_ITEMS[gruppo])
                 st.markdown(f"""
-                    <div style="display:flex; justify-content:space-between; align-items:center;
-                                padding:6px 0; border-bottom:1px solid #eee; font-size:13px;">
-                        <span style="color:{C_DARK}; font-weight:600;">
+                    <div class="sc-level-row">
+                        <span class="sc-level-name">
                             {gruppo}
-                            <span style="font-weight:400; color:{C_MEDIUM};
-                                         font-size:11px;"> ({n_ver_gr}/{n_tot_gr} verificati)</span>
+                            <span class="sc-level-count"> ({n_ver_gr}/{n_tot_gr} verificati)</span>
                         </span>
-                        <span style="background:{bg}; color:{fg}; padding:2px 10px;
-                                     border-radius:6px; font-weight:700; font-size:12px;">
+                        <span class="sc-level-badge" style="background:{bg}; color:{fg};">
                             {n} problemi
                         </span>
                     </div>
@@ -1003,8 +959,8 @@ with col_risultati:
 
         # ── MISURA 2: Punteggio pesato ──
         st.markdown(f"""
-            <div class="result-card" style="border-top: 6px solid {C_MEDIUM};">
-                <div class="measure-label">② PUNTEGGIO PESATO (× INTERSEZIONALE)</div>
+            <div class="result-card result-card-secondary">
+                <div class="measure-label">② PUNTEGGIO PONDERATO (× MOLTIPLICATORE INTERSEZIONALE)</div>
                 <div class="measure-value" style="background:{bg_pts}; color:{fg_pts};">
                     {lbl_pts}
                 </div>
@@ -1017,26 +973,13 @@ with col_risultati:
             )
             liv_labels = ", ".join(l.title() for l in sorted(liv_rilevati))
             st.markdown(f"""
-                <div style="background:#fdf0f5; border:1px solid {C_PRIMARY};
-                            border-radius:8px; padding:10px 14px;
-                            margin-top:-6px; margin-bottom:10px;
-                            font-size:12px; color:{C_DARK};">
-                    <strong style="color:{C_PRIMARY};">
-                        ⚠️ Intersezionale attivo ×{moltiplicatore}
+                <div class="sc-intersect">
+                    <strong class="sc-intersect-header">
+                        ⚠️ Effetto intersezionale attivo ×{moltiplicatore}
                     </strong><br>
-                    Dim.: {dim_labels or '—'} &nbsp;|&nbsp; Livelli: {liv_labels or '—'}
+                    Dimensioni: {dim_labels or '—'} &nbsp;|&nbsp; Livelli implicati: {liv_labels or '—'}
                 </div>
             """, unsafe_allow_html=True)
-
-        # ── MISURA 3: Percentile ──
-        st.markdown(f"""
-            <div class="result-card" style="border-top: 6px solid {C_MEDIUM};">
-                <div class="measure-label">③ POSIZIONE PERCENTILE</div>
-                <div class="measure-value" style="background:{bg_pct}; color:{fg_pct};">
-                    {lbl_pct}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
 
         # ── Stato output Testi e Immagini ──
         testo_status = (
@@ -1055,19 +998,15 @@ with col_risultati:
         st.markdown(f"""
             <div class="result-card">
                 <div class="measure-label">STATO DEGLI OUTPUT</div>
-                <p style="margin:6px 0; color:{C_DARK}; font-size:14px;">
-                    <strong>Testi:</strong> {testo_status}
-                </p>
-                <p style="margin:6px 0; color:{C_DARK}; font-size:14px;">
-                    <strong>Immagini:</strong> {img_status}
-                </p>
+                <p class="sc-output-row"><strong>Testi:</strong> {testo_status}</p>
+                <p class="sc-output-row"><strong>Immagini:</strong> {img_status}</p>
             </div>
         """, unsafe_allow_html=True)
 
         st.write("")
 
         # ── Report scaricabile ──
-        report_data  = f"AUDIT IMAGES NAVIGATOR — {dominio_scelto}\n"
+        report_data  = f"REPORT AUDIT — IMAGES — {dominio_scelto}\n"
         report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
         report_data += "=" * 50 + "\n"
         report_data += f"COPERTURA AUDIT: {pct_cov_sc}% ({ver_cov}/{tot_cov} item verificati)\n"
@@ -1087,8 +1026,6 @@ with col_risultati:
         if moltiplicatore > 1.0:
             report_data += f"  Dimensioni: {', '.join(sorted(dimensioni_attive))}\n"
             report_data += f"  Livelli implicati: {', '.join(sorted(liv_rilevati))}\n"
-        report_data += "-" * 50 + "\n"
-        report_data += f"PERCENTILE: {lbl_pct}\n"
         report_data += "-" * 50 + "\n"
         report_data += f"TESTI: {testo_status}\n"
         report_data += (
