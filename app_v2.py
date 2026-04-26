@@ -6,7 +6,7 @@ from datetime import datetime
 # CONFIGURAZIONE DELLA PAGINA
 # ═══════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="IMAGES NAVIGATOR",
+    page_title="IMAGES AUDIT",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -228,7 +228,7 @@ def get_pesi_dinamici(dominio, w_dati, w_team, w_mod, w_ut):
 # PARAMETRI IMMAGINI
 # ═══════════════════════════════════════════════════════════
 SCORE_IMG_GENDER = {
-    "La figura tocca se stessa (auto-contatto)": 1.0,
+    "La figura tocca sé stessa (auto-contatto)": 1.0,
     "La figura tocca un oggetto in modo non funzionale all'azione": 1.0,
     "Inquadratura frammentata (focus su dettagli del corpo, escluso il volto)": 1.0,
     "Nudità totale": 1.0,
@@ -240,10 +240,10 @@ SCORE_IMG_GENDER = {
 }
 SCORE_IMG_INTERACT = {
     "Donne ritratte sorridenti, uomini con espressione seria": 1.0,
-    "Donne in posa passiva/stazionaria, uomini impegnati in un'azione": 1.0,
+    "Donne in posa passiva o stazionaria, uomini impegnati in un'azione": 1.0,
     "Contesto domestico: solo la donna si occupa dei figli o delle faccende": 1.0,
     "Contesto professionale: l'uomo occupa il ruolo gerarchico superiore": 1.0,
-    "Uomini al centro/primo piano, donne relegate allo sfondo": 1.0,
+    "Uomini al centro o in primo piano, donne relegate allo sfondo": 1.0,
     "Uomini in piedi, donne sedute, sdraiate o inginocchiate": 1.0,
     "L'uomo è ritratto fisicamente più alto della donna": 1.0,
     "L'uomo guarda verso l'osservatore, la donna ha lo sguardo distolto": 1.0,
@@ -271,7 +271,6 @@ _defaults = {
     "_restored_dominio": "",
     "_restored_dimensioni": [],
     "_onboarding_done": False,
-    "_migrazione_v1": False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -398,7 +397,7 @@ def serialize_session(info):
         dati_audit[f"img_e_{label}"] = st.session_state.get(f"img_e_{label}", False)
 
     return {
-        "versione": "1.1",
+        "versione": "1.0",
         "timestamp": datetime.now().isoformat(),
         "info": info,
         "audit": dati_audit,
@@ -406,21 +405,10 @@ def serialize_session(info):
 
 def restore_session(payload):
     try:
-        migrazione_effettuata = False
         for key, value in payload.get("audit", {}).items():
-            # Migrazione dalla versione 1.0 (booleani) alla 1.1 (stringhe SI/NO/NV).
-            # True → "NO" (mancanza rilevata = problema rilevato, framing invertito).
-            # False → "NV": nel vecchio sistema False poteva significare sia "verificato
-            # e in ordine" sia "non ancora verificato". La conversione conservativa in
-            # "NV" è più onesta che assumere falsamente la verifica — l'utente rivaluterà.
-            if isinstance(value, bool):
-                st.session_state[key] = "NO" if value else "NV"
-                migrazione_effettuata = True
-            else:
-                st.session_state[key] = value
+            st.session_state[key] = value
         st.session_state["_session_restored"]  = True
         st.session_state["_session_timestamp"] = payload.get("timestamp", "—")
-        st.session_state["_migrazione_v1"]     = migrazione_effettuata
         info = payload.get("info", {})
         st.session_state["_restored_dominio"]    = info.get("dominio", "")
         st.session_state["_restored_dimensioni"] = info.get("dimensioni_dichiarate", [])
@@ -474,12 +462,6 @@ with st.sidebar:
     if st.session_state["_session_restored"]:
         ts = st.session_state["_session_timestamp"]
         st.success(f"Sessione ripristinata\n{ts[:16].replace('T', ' ')}")
-        if st.session_state.get("_migrazione_v1"):
-            st.warning(
-                "⚠️ File da versione precedente. Gli item non problematici "
-                "sono stati impostati a 'Non verificato' — rivalutali per "
-                "una copertura accurata."
-            )
 
     info_correnti = {
         "dominio": dominio_scelto,
@@ -496,7 +478,7 @@ with st.sidebar:
         use_container_width=True,
     )
 
-    st.markdown("**Riprendi audit**")
+    st.markdown("**Carica sessione**")
     uploaded = st.file_uploader(
         "Carica file sessione (.json)",
         type=["json"],
@@ -543,13 +525,14 @@ with st.sidebar:
 # ONBOARDING — mostrato al primo accesso e su richiesta
 # ═══════════════════════════════════════════════════════════
 if not st.session_state["_onboarding_done"]:
+
     # Logo progetto — sostituire il percorso con il PNG del logo reale
     # Es: st.image("assets/logo_images.png", width=180)
     st.markdown("""
         <div class="ob-container">
           <div class="ob-hero">
             <div class="ob-hero-tag">Progetto PRIN PNRR · IMAGES</div>
-            <div class="ob-hero-title">IMAGES NAVIGATOR</div>
+            <div class="ob-hero-title">IMAGES AUDIT</div>
             <div class="ob-hero-sub">
                 Uno strumento di supporto per chi sviluppa sistemi di intelligenza
                 artificiale e vuole valutare — e migliorare — la loro inclusività
@@ -560,12 +543,13 @@ if not st.session_state["_onboarding_done"]:
     """, unsafe_allow_html=True)
 
     col_ob1, col_ob2 = st.columns(2, gap="medium")
+
     with col_ob1:
         st.markdown("""
             <div class="ob-card primary">
                 <div class="ob-card-label">Il progetto</div>
                 <p class="ob-card-body">
-                    IMAGES Navigator nasce nell'ambito del progetto
+                    IMAGES Audit nasce nell'ambito del progetto
                     <strong>IMAGES</strong> (<em>Inclusive Machine Learning using
                     Art and Culture for tackling Gender and Ethnicity Stereotypes</em>),
                     finanziato dal PRIN PNRR e coordinato da Sapienza Università di Roma
@@ -692,7 +676,7 @@ pesi_dinamici = get_pesi_dinamici(dominio_scelto, w_dati, w_team, w_mod, w_ut)
 # ═══════════════════════════════════════════════════════════
 # LAYOUT PRINCIPALE
 # ═══════════════════════════════════════════════════════════
-st.markdown(f"<h1 style='color:{C_PRIMARY};'>IMAGES NAVIGATOR</h1>",
+st.markdown(f"<h1 style='color:{C_PRIMARY};'>🛡️ IMAGES AUDIT</h1>",
             unsafe_allow_html=True)
 st.markdown("##### SISTEMA DI AUDIT PER L'INCLUSIVITÀ ALGORITMICA | PRIN PNRR")
 st.write("")
@@ -866,6 +850,7 @@ with col_risultati:
     if not audit_avviato:
         st.markdown("""
             <div class='sc-placeholder'>
+                <div class='sc-placeholder-icon'>🛡️</div>
                 <p class='sc-placeholder-text'>
                     Inizia a rispondere alle domande<br>per visualizzare i risultati
                 </p>
@@ -976,7 +961,7 @@ with col_risultati:
         st.write("")
 
         # ── Report scaricabile ──
-        report_data  = f"AUDIT IMAGES NAVIGATOR — {dominio_scelto}\n"
+        report_data  = f"REPORT AUDIT — IMAGES — {dominio_scelto}\n"
         report_data += f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
         report_data += "=" * 50 + "\n"
         report_data += f"COPERTURA AUDIT: {pct_cov_sc}% ({ver_cov}/{tot_cov} item verificati)\n"
